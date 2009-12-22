@@ -1,7 +1,7 @@
 all: clean compile link
 
 compile:
-	nasm -f aout -o start.o start.asm
+	nasm -f elf -o start.o start.asm
 	gcc -Wall -O -fstrength-reduce -fleading-underscore -fomit-frame-pointer -finline-functions -nostdinc -fno-builtin -I./include -c -o main.o main.c
 	gcc -Wall -O -fstrength-reduce -fleading-underscore -fomit-frame-pointer -finline-functions -nostdinc -fno-builtin -I./include -c -o scrn.o scrn.c
 	gcc -Wall -O -fstrength-reduce -fleading-underscore -fomit-frame-pointer -finline-functions -nostdinc -fno-builtin -I./include -c -o gdt.o gdt.c

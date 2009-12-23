@@ -58,7 +58,9 @@ void start()
 
     __asm__ __volatile__ ("sti");
 
-    puts("Hello World!\n");
+    puts("  Welcome to Farmix!\n");
+    puts("   Operating System\n");
+    puts("       0.1\n");
 
     for (;;);
 }

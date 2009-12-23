@@ -1,9 +1,3 @@
-; bkerndev - Bran's Kernel Development Tutorial
-; By:   Brandon F. (friesenb@gmail.com)
-; Desc: Kernel entry point, stack, and Interrupt Service Routines.
-;
-; Notes: No warranty expressed or implied. Use at own risk.
-;
 ; This is the kernel's entry point. We could either call main here,
 ; or we can use this to setup the stack or other nice stuff, like
 ; perhaps setting up the GDT and segments. Please note that interrupts

@@ -1,8 +1,3 @@
-/* bkerndev - Bran's Kernel Development Tutorial
-*  By:   Brandon F. (friesenb@gmail.com)
-*  Desc: Timer driver
-*
-*  Notes: No warranty expressed or implied. Use at own risk. */
 #include <system.h>
 
 /* This will keep track of how many ticks that the system

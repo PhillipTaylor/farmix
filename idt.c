@@ -1,8 +1,3 @@
-/* bkerndev - Bran's Kernel Development Tutorial
-*  By:   Brandon F. (friesenb@gmail.com)
-*  Desc: Interrupt Descriptor Table management
-*
-*  Notes: No warranty expressed or implied. Use at own risk. */
 #include <system.h>
 
 /* Defines an IDT entry */

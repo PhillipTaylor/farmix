@@ -1,8 +1,3 @@
-/* bkerndev - Bran's Kernel Development Tutorial
-*  By:   Brandon F. (friesenb@gmail.com)
-*  Desc: Main.c: C code entry.
-*
-*  Notes: No warranty expressed or implied. Use at own risk. */
 #include <system.h>
 
 void *memcpy(void *dest, const void *src, size_t count)

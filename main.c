@@ -1,5 +1,9 @@
 #include <system.h>
 
+#ifndef OS_VERSION
+	#define OS_VERSION "unspecified"
+#endif
+
 void *memcpy(void *dest, const void *src, size_t count)
 {
     const char *sp = (const char *)src;
@@ -55,7 +59,9 @@ void _start()
 
     puts("  Welcome to Farmix!\n");
     puts("   Operating System\n");
-    puts("       0.1\n");
+    puts("       ");
+	puts(OS_VERSION);
+	puts("\n");
 
     for (;;);
 }

@@ -29,7 +29,7 @@ extern void init_memory();
 /* STR_UTILS.C */
 
 /* kprint and kbprintf supported formats: %s, %x (hex), %i (int), %c, %o (octal), %% */
-extern void kprintf(char *format, void *arg1, void *arg2, void *arg3, void *arg4, void *arg5);
+extern void kprintf(char *format, ...);
 extern int kbprintf(char *buffer, int max_size, const char* format, ...); //same as printf. writes to buffer.
 extern int strcat(char *buffer, int max_size, char *strcat);
 extern int strcpy(char *buffer, int max_size, char *strcat);

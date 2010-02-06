@@ -18,22 +18,16 @@ void outportb (unsigned short _port, char _data)
 
 void print_welcome()
 {
-	int l1, l2;
 
     puts("  Welcome to Farmix!\n");
     puts("   Operating System\n");
     puts("       ");
 	puts(OS_VERSION);
 	puts("\n");
-
-	l1 = NULL;
 	
-	kprintf("NULL = %i\n", &l1, NULL, NULL, NULL, NULL);
+	kprintf("NULL = %i\n", NULL);
 
-	l1 = 15;
-	l2 = 10;
-
-	kprintf("testing the new and sexy kprintf: (%x = 15 and %x = 10)\n", &l1, &l2, NULL, NULL, NULL);
+	kprintf("testing the new and sexy kprintf: (%x = 15 and %x = 10)\n", 15, 10);
 
 }
 

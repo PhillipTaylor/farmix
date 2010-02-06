@@ -27,9 +27,8 @@ int number_to_str(char *buffer, int max_size, int number, int base);
 int int_to_str(char *buffer, int max_size, int number);
 int int_to_hex_str(char *buffer, int max_size, int number);
 int int_to_oct_str(char *buffer, int max_size, int number);
-void *get_arg(int arg, void *arg1, void *arg2, void *arg3, void *arg4, void *arg5);
 
-void kprintf(char *format, void *arg1, void *arg2, void *arg3, void *arg4, void *arg5)
+void kprintf(char *format, ...)
 {
 	char buffer[BUFFER_SIZE];
 
@@ -43,7 +42,19 @@ void kprintf(char *format, void *arg1, void *arg2, void *arg3, void *arg4, void 
 	 * argument.
 	*/
 	int arg_offset = 1;
-	void *arg = arg1;
+
+	/*
+	 * Think this through Phill. &format = address of format on stack.
+	 * &(format + 1) = address of argument after format on stack.
+	 * void *p = &(format + arg_offset);
+	 * kprintf("xxx %i %s", 32, "hello");
+	 * memory would look like = [ 3, 32, 5, "xxx", 32, "hello" ]
+	 * get to 32 via p = &(format + 1); (int)p (because the int is copied, not a pointer)
+	 * get to hello via p = &(format + 2); (char*)p;
+	 */
+
+	void *arg;
+	arg = (void*) (&format + arg_offset);
 
 	while (1)
 	{
@@ -62,11 +73,11 @@ void kprintf(char *format, void *arg1, void *arg2, void *arg3, void *arg4, void 
 			else if (ch == '%')
 				buffer[bpos++] = '%';
 			else if (ch == 'i')
-				bpos += int_to_str(&buffer[bpos], BUFFER_SIZE - bpos, (int)arg);
+				bpos += int_to_str(&buffer[bpos], BUFFER_SIZE - bpos, *((int*)arg));
 			else if (ch == 'x')
-				bpos += int_to_hex_str(&buffer[bpos], BUFFER_SIZE - bpos, (int)arg);
+				bpos += int_to_hex_str(&buffer[bpos], BUFFER_SIZE - bpos, *((int*)arg));
 			else if (ch == 'o')
-				bpos += int_to_oct_str(&buffer[bpos], BUFFER_SIZE - bpos, (int)arg);
+				bpos += int_to_oct_str(&buffer[bpos], BUFFER_SIZE - bpos, *((int*)arg));
 			else
 			{
 				puts("invalid char ");
@@ -75,7 +86,7 @@ void kprintf(char *format, void *arg1, void *arg2, void *arg3, void *arg4, void 
 			}
 
 			arg_offset++;
-			arg = get_arg(arg_offset, arg1, arg2, arg3, arg4, arg5);
+			arg = (void *)(&format + arg_offset);
 		}
 	}
 
@@ -166,7 +177,7 @@ int number_to_str(char *buffer, int max_size, int number, int base)
 	int bpos = 0;
 
 	/* with this method of parsing, the digits come out backwards */
-	while (number > 0)
+	do 
 	{
 		if (stk_pnt > NUMERIC_BUFF_SIZE)
 		{
@@ -177,7 +188,7 @@ int number_to_str(char *buffer, int max_size, int number, int base)
 		remain = number % base;
 		number = number / base;
 		buff_stack[stk_pnt++] = char_map[remain];
-	}
+	} while (number > 0);
 
 	/* before writing...ensure we have enough room */
 	if (stk_pnt > max_size)

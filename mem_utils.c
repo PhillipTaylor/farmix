@@ -134,22 +134,22 @@ void init_memory(void *grub1, unsigned int magic)
 	grub_multiboot_memory_map_t* mmap = (grub_multiboot_memory_map_t*) mbt->mmap_addr;
 	while(mmap < mbt->mmap_addr + mbt->mmap_length) {
 
-		kprintf("Memory Block #%i: %x -> %x (", &i++, &mmap->base_addr_low, &mmap->base_addr_high, NULL, NULL);
+		kprintf("Memory Block #%i: %x -> %x (", i++, &mmap->base_addr_low, &mmap->base_addr_high);
 
 		if (mmap->type == FREE_MEMORY)
-			kprintf("free memory)\n", NULL, NULL, NULL, NULL, NULL);
+			kprintf("free memory)\n");
 		else if (mmap->type == RESERVED)
-			kprintf("reserved)\n", NULL, NULL, NULL, NULL, NULL);
+			kprintf("reserved)\n");
 		else if (mmap->type == ACPI_RECLAIMABLE)
 		{
-			kprintf("acpi reclaimable)\n", NULL, NULL, NULL, NULL, NULL);
+			kprintf("acpi reclaimable)\n");
 			/* yeah I want to reclaim it, so just mark it as free */
 			mmap->type = FREE_MEMORY;
 		}
 		else if (mmap->type == ACPI_NON_VOLATILE)
-			kprintf("acpi non volatile)\n", NULL, NULL, NULL, NULL, NULL);
+			kprintf("acpi non volatile)\n");
 		else if (mmap->type == BAD)
-			kprintf("bad)\n", NULL, NULL, NULL, NULL, NULL);
+			kprintf("bad)\n");
 
 		mmap = (grub_multiboot_memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
 	}

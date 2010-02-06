@@ -1,6 +1,8 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 
+#define NULL 0
+
 typedef unsigned int size_t;
 
 /* This defines what the stack looks like after an ISR was running */
@@ -13,12 +15,25 @@ struct regs
 };
 
 /* MAIN.C */
+extern unsigned char inportb (unsigned short _port);
+extern void outportb (unsigned short _port, char _data);
+
+/* MEM_UTILS.C */
+extern unsigned int grub_boot_memory_map;
+extern unsigned int grub_boot_magic_number;
 extern void *memcpy(void *dest, const void *src, size_t count);
 extern void *memset(void *dest, char val, size_t count);
 extern unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count);
+extern void init_memory();
+
+/* STR_UTILS.C */
+
+/* kprint and kbprintf supported formats: %s, %x (hex), %i (int), %c, %o (octal), %% */
+extern void kprintf(char *format, void *arg1, void *arg2, void *arg3, void *arg4, void *arg5);
+extern int kbprintf(char *buffer, int max_size, const char* format, ...); //same as printf. writes to buffer.
+extern int strcat(char *buffer, int max_size, char *strcat);
+extern int strcpy(char *buffer, int max_size, char *strcat);
 extern size_t strlen(const char *str);
-extern unsigned char inportb (unsigned short _port);
-extern void outportb (unsigned short _port, char _data);
 
 /* CONSOLE.C */
 extern void init_video(void);

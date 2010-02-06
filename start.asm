@@ -20,7 +20,10 @@ mboot:
     MULTIBOOT_CHECKSUM	equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
     EXTERN code, bss, end
 
-    ; This is the GRUB Multiboot header. A boot signature
+    ; This is the GRUB Multiboot header. A boot signature.
+	; It's used to *explicity* tell a multiboot compliant
+	; bootloader (e.g. grub) that this file is a valid
+	; operating system kernel binary that should be used.
     dd MULTIBOOT_HEADER_MAGIC
     dd MULTIBOOT_HEADER_FLAGS
     dd MULTIBOOT_CHECKSUM
@@ -38,6 +41,14 @@ mboot:
 ; before the 'jmp $'.
 stublet:
     extern _start
+    ;push register eax onto stack. It is the second argument to the kernel's main()
+	;it contains the "magic" number (which should be 0x2BADB002). If it does equal
+	;that value then we know this kernel was booted by a "multiboot compliant bootloader".
+	;It means the value of ebx (which we now make the first arg to kernel's main function)
+	;points to a valid multiboot_info structure. This will contain everything we need to
+	;know about available and reserved memory on the system.
+	push eax;
+	push ebx;
     call _start
     jmp $
 

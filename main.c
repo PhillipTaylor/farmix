@@ -4,35 +4,6 @@
 	#define OS_VERSION "unspecified"
 #endif
 
-void *memcpy(void *dest, const void *src, size_t count)
-{
-    const char *sp = (const char *)src;
-    char *dp = (char *)dest;
-    for(; count != 0; count--) *dp++ = *sp++;
-    return dest;
-}
-
-void *memset(void *dest, char val, size_t count)
-{
-    char *temp = (char *)dest;
-    for( ; count != 0; count--) *temp++ = val;
-    return dest;
-}
-
-unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count)
-{
-    unsigned short *temp = (unsigned short *)dest;
-    for( ; count != 0; count--) *temp++ = val;
-    return dest;
-}
-
-size_t strlen(const char *str)
-{
-    size_t retval;
-    for(retval = 0; *str != '\0'; str++) retval++;
-    return retval;
-}
-
 unsigned char inportb (unsigned short _port)
 {
     unsigned char rv;
@@ -45,17 +16,9 @@ void outportb (unsigned short _port, char _data)
     __asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
 }
 
-void _start()
+void print_welcome()
 {
-    gdt_install();
-    idt_install();
-    isrs_install();
-    irq_install();
-    init_video();
-    timer_install();
-    keyboard_install();
-
-    __asm__ __volatile__ ("sti");
+	int l1, l2;
 
     puts("  Welcome to Farmix!\n");
     puts("   Operating System\n");
@@ -63,5 +26,31 @@ void _start()
 	puts(OS_VERSION);
 	puts("\n");
 
+	l1 = NULL;
+	
+	kprintf("NULL = %i\n", &l1, NULL, NULL, NULL, NULL);
+
+	l1 = 15;
+	l2 = 10;
+
+	kprintf("testing the new and sexy kprintf: (%x = 15 and %x = 10)\n", &l1, &l2, NULL, NULL, NULL);
+
+}
+
+void _start(void *grub1, unsigned int magic)
+{
+    gdt_install();
+    idt_install();
+    isrs_install();
+    irq_install();
+    init_video();
+	init_memory(grub1, magic);
+	print_welcome();
+    timer_install();
+    keyboard_install();
+
+    __asm__ __volatile__ ("sti");
+
     for (;;);
 }
+

@@ -11,6 +11,8 @@ compile:
 	nasm -f elf -o start.o start.asm
 	$(COMPILER) $(BUILD_ARGS) -D OS_VERSION='$(OS_VERSION)' -o main.o main.c
 	$(COMPILER) $(BUILD_ARGS) -o scrn.o scrn.c
+	$(COMPILER) $(BUILD_ARGS) -o mem_utils.o mem_utils.c
+	$(COMPILER) $(BUILD_ARGS) -o str_utils.o str_utils.c
 	$(COMPILER) $(BUILD_ARGS) -o gdt.o gdt.c
 	$(COMPILER) $(BUILD_ARGS) -o idt.o idt.c
 	$(COMPILER) $(BUILD_ARGS) -o isrs.o isrs.c
@@ -19,7 +21,7 @@ compile:
 	$(COMPILER) $(BUILD_ARGS) -o kb.o kb.c
 
 link:
-	ld -T link.ld -o kernel.bin start.o main.o scrn.o gdt.o idt.o isrs.o irq.o timer.o kb.o
+	ld -T link.ld -o kernel.bin mem_utils.o start.o main.o str_utils.o scrn.o gdt.o idt.o isrs.o irq.o timer.o kb.o
 	rm -f *.o
 
 active_kernel:

@@ -62,7 +62,6 @@ unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count)
  * how sweet :-) ). My start.asm puts that pointer into this variable
  * so we can just take what grubs given us.
 */
-unsigned int grub_boot_memory_map;
 
 #define FREE_MEMORY       1
 #define RESERVED          2
@@ -118,23 +117,61 @@ typedef struct multiboot_memory_map {
    unsigned long mmap_addr;
  };
 
+ struct fm_mem_reserved  //reserved by programs calling malloc.
+ {
+ 	int owner_id;
+ 	unsigned int memory_start;
+	unsigned int memory_end;
+	struct fm_mem_reserved *next;
+ };
+ 
+ struct fm_mem_block //the elements of static array. denote start/end and linked list of apps.
+ {
+ 	int active; //0 = inactive, 1 = active
+ 	unsigned int memory_start;
+	unsigned int memory_end;
+	struct fm_mem_reserved *head;
+ };
+
+
+/*
+ * This is the memory initialisation function. From grub we get two values:
+ * 1) the value 0xBADBOO2 (which is magic number we use to _ensure_ we have "2)")
+ * 2) a pointer to a data structure called multiboot_info which is basically a linked
+ * list of available memory locations.
+ *
+ * So during init_memory we do the following, We loop over the structure and for
+ * any free memory locations we create another data structure we use later during malloc
+ * to hand out memory chunks. */
+
+#define MEM_ARRAY_SIZE 15
+
+struct fm_mem_block fm_top_level_memory[MEM_ARRAY_SIZE];
+
 void init_memory(void *grub1, unsigned int magic)
 {
 	int i = 0;
+	int offset = 0;
+
 	struct multiboot_info *mbt;
 	mbt = (struct multiboot_info*) grub1;
 	
-	puts("Initialising memory...\n");
+	kprintf("Initialising memory...\n");
+
+	for (i = 0; i < MEM_ARRAY_SIZE; i++)
+		fm_top_level_memory[i].active = 0; //initialise array
 
 	if (magic == GRUB_MAGIC_NUMBER)
-		kprintf("magic number match. %i\n", magic);
+		kprintf("magic number match. %x\n", magic);
 	else
 		kprintf("magic number fail. expected: %x got: %x\n", GRUB_MAGIC_NUMBER, magic);
+
+	i = 0;
 
 	grub_multiboot_memory_map_t* mmap = (grub_multiboot_memory_map_t*) mbt->mmap_addr;
 	while(mmap < mbt->mmap_addr + mbt->mmap_length) {
 
-		kprintf("Memory Block #%i: %x -> %x (", i++, &mmap->base_addr_low, &mmap->base_addr_high);
+		kprintf("Memory Block #%i: %x -> %x (", i, &mmap->base_addr_low, &mmap->base_addr_high);
 
 		if (mmap->type == FREE_MEMORY)
 			kprintf("free memory)\n");
@@ -151,8 +188,60 @@ void init_memory(void *grub1, unsigned int magic)
 		else if (mmap->type == BAD)
 			kprintf("bad)\n");
 
+		if (mmap->type == FREE_MEMORY) {
+			//copy it into a static arrray of memory blocks
+
+			kprintf("Adding block to static array\n");
+
+			fm_top_level_memory[offset].active = 1;
+			fm_top_level_memory[offset].memory_start = &mmap->base_addr_low;
+			fm_top_level_memory[offset].memory_end = &mmap->base_addr_high;
+			fm_top_level_memory[offset].head = NULL; //completely empty!
+
+			offset++;
+		}
+
+		i++;
 		mmap = (grub_multiboot_memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
 	}
 
 }
 
+void print_memory_map() {
+
+	int i = 0;
+	struct fm_mem_reserved *item;
+
+	kprintf("Farmix Memory map:\n");
+
+	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
+
+		if (fm_top_level_memory[i].active == 1) {
+			kprintf("BLOCK %i: (%x -> %x)\n",
+				i,
+				fm_top_level_memory[i].memory_start,
+				fm_top_level_memory[i].memory_end
+			);
+	
+			item = fm_top_level_memory[i].head;
+
+			if (item == NULL)
+				kprintf("-- [entire block is free]\n");
+			else {
+				while (item != NULL) {
+					kprintf("PROCESS %i HAS RANGE %x -> %x\n",
+						item->owner_id,
+						item->memory_start,
+						item->memory_end
+					);
+
+					item = item->next;
+				}
+			}
+		}
+
+	}
+
+	kprintf("End of Map\n");
+
+}

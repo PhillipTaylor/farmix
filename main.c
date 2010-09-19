@@ -39,6 +39,7 @@ void _start(void *grub1, unsigned int magic)
     irq_install();
     init_video();
 	init_memory(grub1, magic);
+	print_memory_map();
 	print_welcome();
     timer_install();
     keyboard_install();

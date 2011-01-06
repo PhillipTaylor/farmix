@@ -71,10 +71,10 @@ unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count)
 
 typedef struct multiboot_memory_map {
 	unsigned int size;
-	unsigned int base_addr_low;
-	unsigned int base_addr_high;
-	unsigned int length_low;
-	unsigned int length_high;
+	unsigned long base_addr_low;
+	unsigned long base_addr_high;
+	unsigned long length_low;
+	unsigned long length_high;
 	unsigned int type;
 } grub_multiboot_memory_map_t;
 
@@ -120,16 +120,16 @@ typedef struct multiboot_memory_map {
  struct fm_mem_reserved  //reserved by programs calling malloc.
  {
  	int owner_id;
- 	unsigned int memory_start;
-	unsigned int memory_end;
+ 	unsigned long long memory_start;
+	unsigned long long memory_end;
 	struct fm_mem_reserved *next;
  };
  
  struct fm_mem_block //the elements of static array. denote start/end and linked list of apps.
  {
  	int active; //0 = inactive, 1 = active
- 	unsigned int memory_start;
-	unsigned int memory_end;
+ 	unsigned long long memory_start;
+	unsigned long long memory_end;
 	struct fm_mem_reserved *head;
  };
 
@@ -171,7 +171,13 @@ void init_memory(void *grub1, unsigned int magic)
 	grub_multiboot_memory_map_t* mmap = (grub_multiboot_memory_map_t*) mbt->mmap_addr;
 	while(mmap < mbt->mmap_addr + mbt->mmap_length) {
 
-		kprintf("Memory Block #%i: %x -> %x (", i, &mmap->base_addr_low, &mmap->base_addr_high);
+		kprintf("Memory Block #%i: %x%x length: %x%x (",
+			i,
+			mmap->base_addr_low,
+			mmap->base_addr_high,
+			mmap->length_low,
+			mmap->length_high
+		);
 
 		if (mmap->type == FREE_MEMORY)
 			kprintf("free memory)\n");
@@ -193,10 +199,10 @@ void init_memory(void *grub1, unsigned int magic)
 
 			kprintf("Adding block to static array\n");
 
-			fm_top_level_memory[offset].active = 1;
-			fm_top_level_memory[offset].memory_start = &mmap->base_addr_low;
-			fm_top_level_memory[offset].memory_end = &mmap->base_addr_high;
-			fm_top_level_memory[offset].head = NULL; //completely empty!
+			//fm_top_level_memory[offset].active = 1;
+			//fm_top_level_memory[offset].memory_start = mmap->base_addr_low;
+			//fm_top_level_memory[offset].memory_end = fm_top_level_memory[i].memory_start + mmap->length;
+			//fm_top_level_memory[offset].head = NULL; //completely empty!
 
 			offset++;
 		}
@@ -211,13 +217,15 @@ void print_memory_map() {
 
 	int i = 0;
 	struct fm_mem_reserved *item;
+	void *x = NULL;
+
 
 	kprintf("Farmix Memory map:\n");
 
 	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
 
 		if (fm_top_level_memory[i].active == 1) {
-			kprintf("BLOCK %i: (%x -> %x)\n",
+			kprintf("BLOCK %i: (%X -> %X)\n",
 				i,
 				fm_top_level_memory[i].memory_start,
 				fm_top_level_memory[i].memory_end
@@ -229,7 +237,7 @@ void print_memory_map() {
 				kprintf("-- [entire block is free]\n");
 			else {
 				while (item != NULL) {
-					kprintf("PROCESS %i HAS RANGE %x -> %x\n",
+					kprintf("PROCESS %i HAS RANGE %X -> %X\n",
 						item->owner_id,
 						item->memory_start,
 						item->memory_end
@@ -244,4 +252,70 @@ void print_memory_map() {
 
 	kprintf("End of Map\n");
 
+}
+
+void *malloc(unsigned int num_bytes) {
+
+	int i = 0, owner_id=39; //random owner_id...to be completed later.
+	struct fm_mem_reserved *ptr;
+	unsigned int space_required;
+	unsigned int free_left = 0;
+	struct fm_mem_reserved *item;
+
+	//the link list describing memory actually comes from the the
+	//unassigned memory blocks itself!!!
+	space_required = num_bytes + sizeof(struct fm_mem_reserved);
+
+	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
+
+		if (fm_top_level_memory[i].active == 1) {
+	
+			item = fm_top_level_memory[i].head;
+
+			if (item == NULL) {
+				// whole block free. is the whole block big enough?
+				kprintf("first block is free. start: %X, end: %X\n",
+					fm_top_level_memory[i].memory_start,
+					fm_top_level_memory[i].memory_end
+				);
+				free_left = fm_top_level_memory[i].memory_end - fm_top_level_memory[i].memory_start;
+				kprintf("free in this block: %i. required: %i. overhead: %i\n",
+					free_left, space_required, sizeof(struct fm_mem_reserved));
+				if (space_required < free_left) {
+
+					//look down. look up. the address at memory start is now a pointer
+					//to a struct fm_mem_reserved. I'm on a horse.
+					ptr = (struct fm_mem_reserved*) fm_top_level_memory[i].memory_start;
+					ptr->memory_start = (fm_top_level_memory[i].memory_start + sizeof(struct fm_mem_reserved));
+					ptr->memory_end = (fm_top_level_memory[i].memory_start + space_required);
+					ptr->next = NULL;
+					ptr->owner_id = owner_id;
+
+					fm_top_level_memory[i].head = ptr;
+
+					return ptr->memory_start;
+				}
+			} else {
+				kprintf("scanning for end of list\n");
+				while (item->next != NULL)
+					item = item->next;
+
+				free_left = fm_top_level_memory[i].memory_end - item->memory_end;
+
+				if (space_required < free_left) {
+					;;
+					//allocate this out!!
+					//append data to structure and return. (do not continue)
+				}
+			}
+		}
+		//kprintf("moving to next block...\n");
+	}
+
+	kprintf("no block big enough\n");
+	return -1;
+
+}
+
+void free(void *start_address) {
 }

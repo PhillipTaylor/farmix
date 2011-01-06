@@ -1,12 +1,12 @@
 #include <system.h>
+#include "config.h"
 
-/* size of buffer used by kprintf only */
 /*
- * If this size constraint becomes a problem
- * the code can use "putch" directly to avoid
- * the need for the buffer.
+ *	KPRINTF_BUFFER_SIZE used by kprintf which has a max line size of 255.
+ *	We _have_ to use a fixed size buffer because it's used before malloc()
+ *	becomes available.
 */
-#define BUFFER_SIZE 255
+#define KPRINTF_BUFFER_SIZE 255
 
 #define BASE_DECIMAL 10
 #define BASE_HEX 16
@@ -14,23 +14,31 @@
 
 /* kprintf / kbprintf interpretations:
  * %s = char*
- * %c = char
- * %i = integer
+ * %c = char (unsigned)
+ * %i = unsigned integer
  * %x = hex
  * %o = octal
  * %% = % character
+ * %X = unsigned long long (as hex)
+ * %U = unsigned long long (as decimal)
  * obvious todo: %f for float (with formatting e.g. %.2f)
 */
 
 
+/* these functions actually convert numbers to strings */
+int ull_number_to_str(char *buffer, int max_size, unsigned long long number, int base);
 int number_to_str(char *buffer, int max_size, int number, int base);
-int int_to_str(char *buffer, int max_size, int number);
-int int_to_hex_str(char *buffer, int max_size, int number);
-int int_to_oct_str(char *buffer, int max_size, int number);
+
+/* these handle the arguments to the functions above. Have a 1 to 1 mapping with char codes */
+/*   %i   */ int int_to_str(char *buffer, int max_size, int number);
+/*   %x   */ int int_to_hex_str(char *buffer, int max_size, int number);
+/*   %o   */ int int_to_oct_str(char *buffer, int max_size, int number);
+/*   %X   */ int unsigned_long_long_to_hex(char *buffer, int max_size, unsigned long long number);
+/*   %U   */ int unsigned_long_long_to_str(char *buffer, int max_size, unsigned long long number);
 
 void kprintf(char *format, ...)
 {
-	char buffer[BUFFER_SIZE];
+	char buffer[KPRINTF_BUFFER_SIZE];
 
 	int bpos = 0; /* position to write to in buffer */
 	int fpos = 0; /* position of char to print in format string */
@@ -54,7 +62,9 @@ void kprintf(char *format, ...)
 	 */
 
 	void *arg;
+	unsigned long long *llu;
 	arg = (void*) (&format + arg_offset);
+	llu = (unsigned long long*) *(&format + arg_offset);
 
 	while (1)
 	{
@@ -69,16 +79,21 @@ void kprintf(char *format, ...)
 		{
 			ch = format[fpos++];
 			if (ch == 's')
-				bpos += strcpy(&buffer[bpos], BUFFER_SIZE - bpos, (char*)arg);
+				bpos += strcpy(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, (char*)arg);
 			else if (ch == '%')
 				buffer[bpos++] = '%';
 			else if (ch == 'i')
-				bpos += int_to_str(&buffer[bpos], BUFFER_SIZE - bpos, *((int*)arg));
+				bpos += int_to_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *((int*)arg));
 			else if (ch == 'x')
-				bpos += int_to_hex_str(&buffer[bpos], BUFFER_SIZE - bpos, *((int*)arg));
+				bpos += int_to_hex_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *((int*)arg));
 			else if (ch == 'o')
-				bpos += int_to_oct_str(&buffer[bpos], BUFFER_SIZE - bpos, *((int*)arg));
-			else
+				bpos += int_to_oct_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *((int*)arg));
+			else if (ch == 'X') {
+				//arg is expected to be a pointer we need to further dereference.
+				bpos += unsigned_long_long_to_hex(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *llu);
+			} else if (ch == 'U') {
+				bpos += unsigned_long_long_to_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *llu);
+			} else
 			{
 				puts("invalid char ");
 				putch(ch);
@@ -87,6 +102,7 @@ void kprintf(char *format, ...)
 
 			arg_offset++;
 			arg = (void *)(&format + arg_offset);
+			llu = (unsigned long long*) *(&format + arg_offset);
 		}
 	}
 
@@ -108,7 +124,9 @@ int kbprintf(char *buffer, int max_size, const char* format, ...)
 	*/
 	int arg_offset = 1;
 	void *arg;
+	unsigned long long *llu;
 	arg = *(&format + arg_offset);
+	llu = (unsigned long long*) *(&format + arg_offset);
 
 	while (1)
 	{
@@ -134,7 +152,11 @@ int kbprintf(char *buffer, int max_size, const char* format, ...)
 				bpos += int_to_hex_str((char*)buffer + bpos, max_size - bpos, (int)arg);
 			else if (ch == 'o')
 				bpos += int_to_oct_str((char*)buffer + bpos, max_size - bpos, (int)arg);
-			else
+			else if (ch == 'X') {
+				bpos += unsigned_long_long_to_hex((char*)buffer + bpos, max_size - bpos, *llu);
+			} else if (ch == 'U') {
+				bpos += unsigned_long_long_to_str((char*)buffer + bpos, max_size - bpos, *llu);
+			} else
 			{
 				puts("invalid char ");
 				putch(ch);
@@ -143,6 +165,7 @@ int kbprintf(char *buffer, int max_size, const char* format, ...)
 
 			arg_offset++;
 			arg = *(&format + arg_offset);
+			llu = *(&format + arg_offset);
 		}
 	}
 
@@ -165,7 +188,30 @@ int int_to_oct_str(char *buffer, int max_size, int number)
 	return number_to_str(buffer, max_size, number, BASE_OCT);
 }
 
-#define NUMERIC_BUFF_SIZE 32
+int unsigned_long_long_to_hex(char *buffer, int max_size, unsigned long long number)
+{
+	return ull_number_to_str(buffer, max_size, number, BASE_HEX);
+}
+
+int unsigned_long_long_to_str(char *buffer, int max_size, unsigned long long number) {
+	return ull_number_to_str(buffer, max_size, number, BASE_DECIMAL);
+}
+
+int ull_number_to_str(char *buffer, int max_size, unsigned long long number, int base) {
+	
+	int bufpos = 0;
+
+	unsigned int lo_byte = (unsigned int) number;
+	unsigned int hi_byte = (unsigned int) (number >> 32);
+
+	bufpos = number_to_str(buffer, max_size, lo_byte, base);
+	bufpos += number_to_str(buffer + bufpos, max_size, hi_byte, base);
+
+	return bufpos;
+
+}
+
+#define NUMERIC_BUFF_SIZE (11 * (ADDRESS_SIZE / 32))
 
 int number_to_str(char *buffer, int max_size, int number, int base)
 {

@@ -3,6 +3,7 @@ BUILD_ARGS= -Wall -O -fstrength-reduce -fomit-frame-pointer -finline-functions -
 
 OS_VERSION="0.1"
 
+PREV_KERNEL_PATH=./prev_kernels
 INSTALL_TO=/farmix.bin
 
 all: clean compile link
@@ -25,7 +26,14 @@ link:
 	rm -f *.o
 
 active_kernel:
+	cp $(INSTALL_TO) $(PREV_KERNEL_PATH)$(INSTALL_TO)_`date +%F_%H_%M`
 	cp kernel.bin $(INSTALL_TO)
+
+disassemble: clean compile
+	echo -e "disassemble\n\n" > disassemble.asm
+	objdump -d *.o >> disassemble.asm
+	less disassemble.asm
+	rm -f o.*
 
 clean:
 	rm -f *.o

@@ -35,7 +35,6 @@ prev_kernel:
 	cp $(INSTALL_TO) $(PREV_KERNEL_PATH)$(INSTALL_TO)_`date +%y-%m-%d_%H_%M` || true
 
 active_kernel:
-	cp $(INSTALL_TO) $(PREV_KERNEL_PATH)$(INSTALL_TO)_`date +%y-%m-%d_%H_%M` || true
 	cp kernel.bin $(INSTALL_TO)
 
 disassemble: compile

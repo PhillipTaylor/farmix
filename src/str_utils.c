@@ -1,5 +1,6 @@
 #include <system.h>
-#include "config.h"
+#include <config.h>
+#include <const.h>
 
 /*
  *	KPRINTF_BUFFER_SIZE used by kprintf which has a max line size of 255.

@@ -1,0 +1,5 @@
+
+Part of the build phase is to back up the last successful kernel binary to this directory.
+Either so they can be run and tested together and so the assembly can be compared with objdump.
+
+Beaware the kernels in the folder and not checked in to git.

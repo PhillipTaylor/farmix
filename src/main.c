@@ -23,17 +23,29 @@ void print_welcome()
 	
 	g = &f;
 
-    puts("  Welcome to Farmix!\n");
-    puts("   Operating System\n");
-    puts("       ");
+	puts("    888888888888888888888888888888888888888888888888888888888888888888888  \n");
+	puts("    888888888888888888888888888888888888888888888888888888888888888888888  \n");
+
+	puts("     Phillip Ross Taylor's                                                 \n");
+
+	puts("     88888888888                                          88               \n");
+	puts("     88                                                   ""               \n");
+	puts("     88                                                                    \n");
+	puts("     88aaaaa  ,adPPYYba,  8b,dPPYba,  88,dPYba,,adPYba,   88  8b,     ,d8  \n");
+	puts("     88\"\"\"\"\"  \"\"     `Y8  88P'   \"Y8  88P'   \"88\"    \"8a  88   `Y8, ,8P'   \n");
+	puts("     88       ,adPPPPP88  88          88      88      88  88     )888(     \n");
+	puts("     88       88,    ,88  88          88      88      88  88   ,d8\" \"8b,   \n");
+	puts("     88       `\"8bbdP\"Y8  88          88      88      88  88  8P'     `Y8  \n");
+
+	puts("                                                         Operating System  \n");
+
+	puts("    888888888888888888888888888888888888888888888888888888888888888888888  \n");
+	puts("    888888888888888888888888888888888888888888888888888888888888888888888  \n");
+
+	puts("Build version: ");
 	puts(OS_VERSION);
 	puts("\n");
-	
-	kprintf("NULL = %i\n", NULL);
 
-	kprintf("testing the new and sexy kprintf: (%x = 15 and %x = 10)\n", 15, 10);
-
-	kprintf("ull test: 1=%U 2=%X 3=%x 4= 5=\n", g, g, g);
 }
 
 void _start(void *grub1, unsigned int magic)

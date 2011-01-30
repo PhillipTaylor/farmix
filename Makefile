@@ -16,7 +16,9 @@ compile: clean
 	nasm -f elf -o $(BUILD_DIR)/start.o $(SRC_DIR)/start.asm
 	$(COMPILER) $(BUILD_ARGS) -D OS_VERSION='$(OS_VERSION)' -o $(BUILD_DIR)/main.o $(SRC_DIR)/main.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/scrn.o $(SRC_DIR)/scrn.c
-	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/mem_utils.o $(SRC_DIR)/mem_utils.c
+	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/mem_utils.o $(SRC_DIR)/memory/mem_utils.c
+	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/mem_detect.o $(SRC_DIR)/memory/mem_detect.c
+	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/mem_api.o $(SRC_DIR)/memory/mem_api.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/str_utils.o $(SRC_DIR)/str_utils.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/gdt.o $(SRC_DIR)/gdt.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/idt.o $(SRC_DIR)/idt.c
@@ -26,7 +28,7 @@ compile: clean
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/kb.o $(SRC_DIR)/kb.c
 
 link: compile
-	ld -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/{mem_utils.o,start.o,main.o,str_utils.o,scrn.o,gdt.o,idt.o,isrs.o,irq.o,timer.o,kb.o}
+	ld -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/{mem_utils.o,mem_api.o,mem_detect.o,start.o,main.o,str_utils.o,scrn.o,gdt.o,idt.o,isrs.o,irq.o,timer.o,kb.o}
 
 clean: prev_kernel
 	rm -rf $(BUILD_DIR)

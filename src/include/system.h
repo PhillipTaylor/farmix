@@ -1,8 +1,6 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 
-#define NULL 0
-
 typedef unsigned int size_t;
 
 /* This defines what the stack looks like after an ISR was running */
@@ -18,14 +16,14 @@ struct regs
 extern unsigned char inportb (unsigned short _port);
 extern void outportb (unsigned short _port, char _data);
 
-/* MEM_UTILS.C */
+/* MEMORY/ */
 #define OUT_OF_MEMORY -1
 extern unsigned int grub_boot_memory_map;
 extern unsigned int grub_boot_magic_number;
 extern void *memcpy(void *dest, const void *src, size_t count);
 extern void *memset(void *dest, char val, size_t count);
 extern unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count);
-extern void init_memory();
+void init_memory(void *multiboot_data, unsigned int magic);
 extern void print_memory_map();
 extern void *malloc(unsigned int num_bytes);
 extern void free(void *start_address);

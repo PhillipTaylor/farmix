@@ -26,18 +26,18 @@
 
 struct fm_mem_reserved {
 	int owner_id;
-	unsigned long long memory_start;
-	unsigned long long memory_end;
+	unsigned long memory_start;
+	unsigned long memory_end;
 	struct fm_mem_reserved *next;
 };
 
 struct fm_mem_block {
 	int active; //0 = inactive, 1 = active
-	unsigned long long memory_start;
-	unsigned long long memory_end;
+	unsigned long memory_start;
+	unsigned long memory_end;
 	struct fm_mem_reserved *head;
 };
 
 #define MEM_ARRAY_SIZE 15
 
-struct fm_mem_block fm_top_level_memory[MEM_ARRAY_SIZE];
+extern struct fm_mem_block fm_top_level_memory[];

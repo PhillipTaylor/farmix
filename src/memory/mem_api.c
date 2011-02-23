@@ -1,17 +1,37 @@
 #include <const.h>
 #include <system.h>
+#include <common_types.h>
 #include "mem_struct.h"
+
+struct fm_mem_block fm_top_level_memory[MEM_ARRAY_SIZE];
+
+// returns a reservation node correctly set up.
+static struct fm_mem_reserved *make_block(unsigned long memory_start, unsigned long memory_end) {
+	
+	struct fm_mem_reserved *ptr;
+
+	//look down. look up. the address at memory start is now a pointer
+	//to a struct fm_mem_reserved. I'm on a horse.
+	ptr = (struct fm_mem_reserved*) memory_start;
+	ptr->memory_start = memory_start + sizeof(struct fm_mem_reserved); //start of the memory given to the process.
+	ptr->memory_end = memory_end;
+	ptr->next = NULL;
+
+	ptr->owner_id = 39; //once scheduler exists would be sched->get_current_pid() or something.
+
+	return ptr;
+}
 
 void *malloc(unsigned int num_bytes) {
 
-	int i = 0, owner_id=39; //random owner_id...to be completed later.
+	int i = 0;
 	struct fm_mem_reserved *ptr;
 	unsigned int space_required;
 	unsigned int free_left = 0;
 	struct fm_mem_reserved *item;
 
-	//the link list describing memory actually comes from the the
-	//unassigned memory blocks itself!!!
+	// The link list describing memory actually comes from the
+	// unassigned memory blocks itself!!!
 	space_required = num_bytes + sizeof(struct fm_mem_reserved);
 
 	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
@@ -20,52 +40,142 @@ void *malloc(unsigned int num_bytes) {
 	
 			item = fm_top_level_memory[i].head;
 
+			/*
+			 * WHOLE BLOCK IS FREE. ALLOCATE FIRST CHILD AND ASSIGN TO HEAD
+			*/ 
+
 			if (item == NULL) {
-				// whole block free. is the whole block big enough?
-				kprintf("first block is free. start: %X, end: %X\n",
-					fm_top_level_memory[i].memory_start,
-					fm_top_level_memory[i].memory_end
-				);
 				free_left = fm_top_level_memory[i].memory_end - fm_top_level_memory[i].memory_start;
-				kprintf("free in this block: %i. required: %i. overhead: %i\n",
-					free_left, space_required, sizeof(struct fm_mem_reserved));
+
 				if (space_required < free_left) {
 
-					//look down. look up. the address at memory start is now a pointer
-					//to a struct fm_mem_reserved. I'm on a horse.
-					ptr = (struct fm_mem_reserved*) fm_top_level_memory[i].memory_start;
-					ptr->memory_start = (fm_top_level_memory[i].memory_start + sizeof(struct fm_mem_reserved));
-					ptr->memory_end = (fm_top_level_memory[i].memory_start + space_required);
-					ptr->next = NULL;
-					ptr->owner_id = owner_id;
+					ptr = make_block(
+						fm_top_level_memory[i].memory_start,
+						fm_top_level_memory[i].memory_start + space_required
+					);
 
 					fm_top_level_memory[i].head = ptr;
-
-					return ptr->memory_start;
+					return (void*) ptr->memory_start;
 				}
-			} else {
-				kprintf("scanning for end of list\n");
-				while (item->next != NULL)
-					item = item->next;
 
+			} else {
+
+				kprintf("scanning for end of list\n");
+
+				/*
+				 * ROOM BEFORE FIRST CHILD OF HEAD
+				 * (first block allocated out from this top level was removed)
+				*/
+
+				if ((item->memory_start - fm_top_level_memory[i].memory_start) > space_required) {
+
+					ptr = make_block(
+						fm_top_level_memory[i].memory_start,
+						fm_top_level_memory[i].memory_start + space_required
+					);
+
+					ptr->next = item;
+					fm_top_level_memory[i].head = ptr;
+					return (void*) ptr->memory_start;
+
+				}
+
+				/*
+				 * ROOM BETWEEN TWO NODES
+				 * (allocated block from the middle of the list was removed)
+				*/
+
+				while (item->next != NULL) {
+
+					if ((item->next->memory_start - item->memory_end) > space_required) {
+						//gap inside the linked list. hand it out.
+
+						ptr = make_block(
+							item->memory_end,
+							item->memory_end + space_required
+						);
+
+						ptr->next = item->next;
+						item->next = ptr;
+						return (void*) ptr->memory_start;
+					}
+
+					item = item->next;
+				}
+
+				/*
+				 * THE BLOCK ISN'T FULL AND SPACE IS AVAILABLE AT END OF LIST
+				*/
 				free_left = fm_top_level_memory[i].memory_end - item->memory_end;
 
 				if (space_required < free_left) {
-					;;
-					//allocate this out!!
-					//append data to structure and return. (do not continue)
+				
+					ptr = make_block(
+						item->memory_end,
+						item->memory_end + space_required
+					);
+
+					item->next = ptr;
+					return (void*) ptr->memory_start;
 				}
 			}
 		}
-		//kprintf("moving to next block...\n");
 	}
 
 	kprintf("no block big enough\n");
-	return -1;
+	return (void*) OUT_OF_MEMORY;
 
 }
 
 void free(void *start_address) {
+
+	int i = 0, srt;
+	struct fm_mem_reserved *item;
+
+	srt = (unsigned long) start_address;
+
+	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
+
+		if (srt < fm_top_level_memory[i].memory_start) {
+			kprintf("something went wrong. start address. less than first"
+			"memory_start (start_address=%x, memory_start=%x\n",
+				srt,
+				fm_top_level_memory[i].memory_start
+			);
+		//It's in this top level block. Find it, delete it.
+		} else if (srt < fm_top_level_memory[i].memory_end) {
+
+			item = fm_top_level_memory[i].head;
+
+			kprintf("read: %x\n", item->next->memory_start);
+
+			if (item->memory_start == srt)
+				fm_top_level_memory[i].head = item->next;
+
+			while (item->next != NULL) {
+
+				kprintf("read: %x\n",
+					item->next->memory_start
+				);
+
+				if (item->next->memory_start == srt) {
+					item->next = item->next->next;
+					kprintf("freed.\n");
+					return;
+				}
+
+				item = item->next;
+			}
+
+			kprintf("something went wrong. start_address doesn't match node\n");
+			return;
+		}
+	}
+	kprintf("something went wrong. start address greater than last"
+	"memory_end (start_address=%x, memory_end=%x\n",
+		srt,
+		fm_top_level_memory[i].memory_end
+	);
 }
 
 void print_memory_map() {
@@ -78,12 +188,10 @@ void print_memory_map() {
 	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
 
 		if (fm_top_level_memory[i].active == 1) {
-			kprintf("BLOCK %i: (%x%x -> %x%x)\n",
+			kprintf("BLOCK %i: (%x -> %x)\n",
 				i,
-				(unsigned long)fm_top_level_memory[i].memory_start >> 32,
-				(unsigned long)fm_top_level_memory[i].memory_start,
-				(unsigned long)fm_top_level_memory[i].memory_end >> 32,
-				(unsigned long)fm_top_level_memory[i].memory_end
+				fm_top_level_memory[i].memory_start,
+				fm_top_level_memory[i].memory_end
 			);
 	
 			item = fm_top_level_memory[i].head;
@@ -92,12 +200,10 @@ void print_memory_map() {
 				kprintf("-- [entire block is free]\n");
 			else {
 				while (item != NULL) {
-					kprintf("PROCESS %i HAS RANGE %x%x -> %x%x\n",
+					kprintf("PROCESS %i HAS RANGE %x -> %x\n",
 						item->owner_id,
-						(unsigned long)item->memory_start >> 32,
-						(unsigned long)item->memory_start,
-						(unsigned long)item->memory_end >> 32,
-						(unsigned long)item->memory_end
+						item->memory_start,
+						item->memory_end
 					);
 
 					item = item->next;

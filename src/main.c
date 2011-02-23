@@ -47,7 +47,9 @@ void print_welcome()
 
 void _start(void *grub1, unsigned int magic)
 {
-	int *mem_req = NULL;
+	int *mem_req;
+
+	mem_req = NULL;
 
     gdt_install();
     idt_install();
@@ -58,19 +60,26 @@ void _start(void *grub1, unsigned int magic)
 	print_memory_map();
 	
 	//testing malloc
-	//mem_req = (int*) malloc(32);
+	mem_req = (int*) malloc(32);
 	//mem_req = OUT_OF_MEMORY;
 
-	//if (mem_req == OUT_OF_MEMORY)
-	//	kprintf("didn't get a usable address back\n");
-	//else {
-	//	(*mem_req) = 6;
-	//	kprintf("mem_req points to %x\n", mem_req);
-	//	kprintf("mem_req has value of %i\n", *mem_req);
-	//}
+	if (mem_req == OUT_OF_MEMORY)
+		kprintf("didn't get a usable address back\n");
+	else {
+		(*mem_req) = 6;
+		kprintf("mem_req points to %x\n", mem_req);
+		kprintf("mem_req has value of %i\n", *mem_req);
+	}
+	
+	mem_req = (int*) malloc(16);
+	mem_req = (int*) malloc(99);
+	mem_req = (int*) malloc(1024);
+	free(mem_req);
+	mem_req = (int*) malloc(18024);
+	mem_req = (int*) malloc(1);
 
 	// reprint memory map
-	//print_memory_map();
+	print_memory_map();
 	//print_welcome();
     //timer_install();
     //keyboard_install();

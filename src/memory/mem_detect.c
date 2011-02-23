@@ -96,6 +96,8 @@ void init_memory(void *multiboot_data, unsigned int magic)
 {
 	int i = 0;
 	int offset = 0;
+	unsigned long long total_memory;
+	total_memory = 0;
 
 	struct multiboot_info *mbt;
 	mbt = (struct multiboot_info*) multiboot_data;
@@ -118,12 +120,17 @@ void init_memory(void *multiboot_data, unsigned int magic)
 	grub_multiboot_memory_map_t* mmap = (grub_multiboot_memory_map_t*) mbt->mmap_addr;
 	while(mmap < mbt->mmap_addr + mbt->mmap_length) {
 
+		if ((mmap->base_addr >> 32) + (mmap->length >> 32) > 0) {
+			kprintf("64 bit memory address for 32 bit machine.\n");
+			return;
+		}
+
 		kprintf("Memory Block #%i: %x%x length: %x%x (",
 			i,
-			(unsigned long)mmap->base_addr >> 32,
-			(unsigned long)mmap->base_addr,
-			(unsigned long)mmap->length >> 32,
-			(unsigned long)mmap->length
+			(unsigned long)(mmap->base_addr >> 32),
+			(unsigned long)(mmap->base_addr),
+			(unsigned long)(mmap->length >> 32),
+			(unsigned long)(mmap->length)
 		);
 
 		if (mmap->type == FREE_MEMORY)
@@ -146,16 +153,22 @@ void init_memory(void *multiboot_data, unsigned int magic)
 			kprintf(" usable\n");
 
 			fm_top_level_memory[offset].active = 1;
-			fm_top_level_memory[offset].memory_start = mmap->base_addr;
-			fm_top_level_memory[offset].memory_end = fm_top_level_memory[i].memory_start + mmap->length;
+			fm_top_level_memory[offset].memory_start = mmap->base_addr & 0xFFFFFFFF;
+			fm_top_level_memory[offset].memory_end = (fm_top_level_memory[i].memory_start & 0xFFFFFFFF) + (mmap->length & 0xFFFFFFFF);
 			fm_top_level_memory[offset].head = NULL; //completely empty!
 
+			total_memory += mmap->length;
 			offset++;
 		} else
 			kprintf(" ignored\n");
 
 		i++;
 		mmap = (grub_multiboot_memory_map_t*) ( (unsigned int)mmap + mmap->size + sizeof(unsigned int) );
+
+		kprintf("total usable memory: %x%x\n",
+			total_memory >> 32,
+			total_memory
+		);
 	}
 
 }

@@ -1,6 +1,5 @@
 #include <const.h>
 #include <system.h>
-#include <common_types.h>
 #include "mem_struct.h"
 
 struct fm_mem_block fm_top_level_memory[MEM_ARRAY_SIZE];
@@ -36,7 +35,7 @@ void *malloc(unsigned int num_bytes) {
 
 	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
 
-		if (fm_top_level_memory[i].active == 1) {
+		if (fm_top_level_memory[i].active == TRUE) {
 	
 			item = fm_top_level_memory[i].head;
 
@@ -187,7 +186,7 @@ void print_memory_map() {
 
 	for (i = 0; i < MEM_ARRAY_SIZE; i++) {
 
-		if (fm_top_level_memory[i].active == 1) {
+		if (fm_top_level_memory[i].active == TRUE) {
 			kprintf("BLOCK %i: (%x -> %x)\n",
 				i,
 				fm_top_level_memory[i].memory_start,

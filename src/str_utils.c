@@ -85,9 +85,10 @@ void kprintf(char *format, ...)
 				buffer[bpos++] = '%';
 			else if (ch == 'i')
 				bpos += int_to_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *((int*)arg));
-			else if (ch == 'x')
+			else if (ch == 'x') {
+				buffer[bpos++] = '0'; buffer[bpos++] = 'x';
 				bpos += int_to_hex_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *((int*)arg));
-			else if (ch == 'o')
+			} else if (ch == 'o')
 				bpos += int_to_oct_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *((int*)arg));
 			else if (ch == 'X') {
 				//arg is expected to be a pointer we need to further dereference.

@@ -37,7 +37,7 @@ prev_kernel:
 	cp $(INSTALL_TO) $(PREV_KERNEL_PATH)$(INSTALL_TO)_`date +%y-%m-%d_%H_%M` || true
 
 active_kernel:
-	cp kernel.bin $(INSTALL_TO)
+	cp $(BUILD_DIR)/kernel.bin $(INSTALL_TO)
 
 disassemble: compile
 	objdump -d $(BUILD_DIR)/*.o >> $(BUILD_DIR)/disassemble.asm

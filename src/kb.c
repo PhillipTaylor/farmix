@@ -1,5 +1,8 @@
 #include <system.h>
 
+#define KEY_PAGE_UP 73
+#define KEY_PAGE_DOWN 81
+
 /* KBDUS means US Keyboard Layout. This is a scancode table
 *  used to layout a standard US keyboard. I have left some
 *  comments in to give you an idea of what key is what, even
@@ -74,7 +77,13 @@ void keyboard_handler(struct regs *r)
         *  to the above layout to correspond to 'shift' being
         *  held. If shift is held using the larger lookup table,
         *  you would add 128 to the scancode when you look for it */
-        putch(kbdus[scancode]);
+		if (scancode == KEY_PAGE_UP) { //arrow up
+			scr_scroll_up();
+		} else if (scancode == KEY_PAGE_DOWN) {
+			scr_scroll_down();
+		} else
+			putch(kbdus[scancode]);
+			//kprintf("keycode: %i", scancode);
     }
 }
 

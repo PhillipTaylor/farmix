@@ -79,9 +79,9 @@ void _start(void *grub1, unsigned int magic)
 
 	// reprint memory map
 	print_memory_map();
-	//print_welcome();
+	print_welcome();
     //timer_install();
-    //keyboard_install();
+    keyboard_install();
 
     __asm__ __volatile__ ("sti");
 

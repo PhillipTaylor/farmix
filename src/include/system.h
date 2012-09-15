@@ -42,6 +42,8 @@ extern void init_video(void);
 extern void puts(char *text);
 extern void putch(char c);
 extern void cls();
+extern void scr_scroll_up(void);
+extern void scr_scroll_down(void);
 
 /* GDT.C */
 extern void gdt_set_gate(int num, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran);

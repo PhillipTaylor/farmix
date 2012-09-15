@@ -1,158 +1,214 @@
 #include <system.h>
 
-/* These define our textpointer, our background and foreground
-*  colors (attributes), and x and y cursor coordinates */
+#define SCR_HEIGHT 25
+#define SCR_WIDTH 80
+#define SCR_SIZE (SCR_HEIGHT * SCR_WIDTH)
+
+// Available lines of scrollback including what you can actually
+// see. (min value=SCR_HEIGHT)
+#define BUFFER_LINES 60
+#define BUFFER_SIZE (BUFFER_LINES * SCR_WIDTH)
+
+#define TAB_SPACES 4
+
+#define KEY_BACKSPACE 0x08
+#define KEY_TAB 0x09
+
+void redraw(void);
+void move_csr(void);
+void clear_screen(void);
+inline int is_eob(void); // eob = end of buffer
+inline size_t eol_distance(void); // eol = end of line.
+inline void push_scrollback(void);
+
+// This is the memory that's shared with the VGA. Anything written into
+// here becomes visible on screen. This console driver essentially works
+// by copying everything into buffer, and then redraw() copies the viewport
+// (view_offset) portion into this address area.
 unsigned short *textmemptr;
-int attrib = 0x0F;
-int csr_x = 0, csr_y = 0;
 
-/* Scrolls the screen */
-void scroll(void)
-{
-    unsigned blank, temp;
+unsigned short buffer[BUFFER_SIZE][SCR_WIDTH];
 
-    /* A blank is defined as a space... we need to give it
-    *  backcolor too */
+int attrib = 0x0F; //controls color etc.
+unsigned blank; // what a blank space given the colour attributes.
+
+unsigned short *buf_csr; //buffer cursor location.
+unsigned short *view_offset; //which subset of the buffer we're viewing.
+int scroll_lock; //move viewport on print
+
+void init_video(void) {
+    textmemptr = (unsigned short *)0xB8000;
     blank = 0x20 | (attrib << 8);
+	buf_csr = &buffer;
+	view_offset = &buffer;
+    cls();
+	scroll_lock = 0;
+	redraw();
+}
 
-    /* Row 25 is the end, this means we need to scroll up */
-    if(csr_y >= 25)
-    {
-        /* Move the current text chunk that makes up the screen
-        *  back in the buffer by a line */
-        temp = csr_y - 25 + 1;
-        memcpy (textmemptr, textmemptr + temp * 80, (25 - temp) * 80 * 2);
+void scr_scroll_down(void) {
+	if (view_offset + SCR_WIDTH < &buffer + BUFFER_SIZE) {
+		view_offset += SCR_WIDTH;
+		move_csr();
+		redraw();
+	}
+}
 
-        /* Finally, we set the chunk of memory that occupies
-        *  the last line of text to our 'blank' character */
-        memsetw (textmemptr + (25 - temp) * 80, blank, 80);
-        csr_y = 25 - 1;
-    }
+void scr_scroll_up(void) {
+	if (view_offset > &buffer) {
+		view_offset -= SCR_WIDTH;
+		move_csr();
+		redraw();
+	}
+}
+
+void redraw(void) {
+	//copy a screens worth of data from the buffer into
+	//the actual video memory.
+	unsigned short *text_tmp, *view_tmp;
+	unsigned short *eob, *eos;
+
+	text_tmp = textmemptr;
+	view_tmp = view_offset;
+
+	//one whole screen from viewport location (eos=end of screen)
+	eos = view_offset + SCR_SIZE;
+	eob = &buffer + BUFFER_SIZE; //eob = end of buffer
+
+	while (view_tmp < eob && view_tmp < eos) {
+		*text_tmp = *view_tmp;
+		text_tmp++;
+		view_tmp++;
+	}
+
+	// blank the screen if you scrolled past the end of the buffer.
+	while (view_tmp < eos) {
+		*text_tmp = blank;
+		text_tmp++;
+		view_tmp++;
+	}
 }
 
 /* Updates the hardware cursor: the little blinking line
 *  on the screen under the last character pressed! */
-void move_csr(void)
-{
+void move_csr(void) {
     unsigned temp;
 
-    /* The equation for finding the index in a linear
-    *  chunk of memory can be represented by:
-    *  Index = [(y * width) + x] */
-    temp = csr_y * 80 + csr_x;
+	if (view_offset < buf_csr && view_offset + SCR_SIZE > buf_csr)
+		temp = buf_csr - view_offset;
+	else
+		temp = 0;
 
-    /* This sends a command to indicies 14 and 15 in the
-    *  CRT Control Register of the VGA controller. These
-    *  are the high and low bytes of the index that show
-    *  where the hardware cursor is to be 'blinking'. To
-    *  learn more, you should look up some VGA specific
-    *  programming documents. A great start to graphics:
-    *  http://www.brackeen.com/home/vga */
+    //more info at http://www.brackeen.com/home/vga
     outportb(0x3D4, 14);
     outportb(0x3D5, temp >> 8);
     outportb(0x3D4, 15);
     outportb(0x3D5, temp);
 }
 
-/* Clears the screen */
-void cls()
-{
-    unsigned blank;
-    int i;
-
-    /* Again, we need the 'short' that will be used to
-    *  represent a space with color */
-    blank = 0x20 | (attrib << 8);
-
-    /* Sets the entire screen to spaces in our current
-    *  color */
-    for(i = 0; i < 25; i++)
-        memsetw (textmemptr + i * 80, blank, 80);
-
-    /* Update out virtual cursor, and then move the
-    *  hardware cursor */
-    csr_x = 0;
-    csr_y = 0;
-    move_csr();
+// clear everything including scrollback
+void cls(void) {
+	memsetw(&buffer, blank, BUFFER_SIZE);
+	clear_screen();
+	buf_csr = &buffer;
+	view_offset = &buffer;
+	move_csr();
 }
 
-/* Puts a single character on the screen */
-void putch(char c)
-{
-    unsigned short *where;
+void clear_screen(void) {
+	memsetw(textmemptr, blank, SCR_SIZE);
+}
+
+void putch(char ch) {
+	size_t i;
+	int j;
     unsigned att = attrib << 8;
+	unsigned short *eob;
+	unsigned short *eolwrite;
 
-    /* Handle a backspace, by moving the cursor back one space */
-    if(c == 0x08)
-    {
-        if(csr_x != 0) csr_x--;
-    }
-    /* Handles a tab by incrementing the cursor's x, but only
-    *  to a point that will make it divisible by 8 */
-    else if(c == 0x09)
-    {
-        csr_x = (csr_x + 8) & ~(8 - 1);
-    }
-    /* Handles a 'Carriage Return', which simply brings the
-    *  cursor back to the margin */
-    else if(c == '\r')
-    {
-        csr_x = 0;
-    }
-    /* We handle our newlines the way DOS and the BIOS do: we
-    *  treat it as if a 'CR' was also there, so we bring the
-    *  cursor to the margin and we increment the 'y' value */
-    else if(c == '\n')
-    {
-        csr_x = 0;
-        csr_y++;
-    }
-    /* Any character greater than and including a space, is a
-    *  printable character. The equation for finding the index
-    *  in a linear chunk of memory can be represented by:
-    *  Index = [(y * width) + x] */
-    else if(c >= ' ')
-    {
-        where = textmemptr + (csr_y * 80 + csr_x);
-        *where = c | att;	/* Character AND attributes: color */
-        csr_x++;
-    }
+	if (is_eob())
+		push_scrollback();
 
-    /* If the cursor has reached the edge of the screen's width, we
-    *  insert a new line in there */
-    if(csr_x >= 80)
-    {
-        csr_x = 0;
-        csr_y++;
-    }
+	// do the backspace key later
+	// when we actually write a shell.
+	if (ch == KEY_BACKSPACE)
+		return;
 
-    /* Scroll the screen if needed, and finally move the cursor */
-    scroll();
-    move_csr();
+	if (ch == KEY_TAB) {
+		for (j = 0; j < TAB_SPACES; j++)
+			putch(' ');
+	} else if (ch == '\n') {
+
+			i = eol_distance();
+
+			//easiest implementation? just fill to end of line with spaces?
+			while (i > 0) {
+				putch(' '); //replace with memset later?
+				--i;
+			}
+
+	} else if (ch >= ' ') {
+		*buf_csr = ch | att;
+		buf_csr++;
+		move_csr();
+		redraw();
+	}
 }
 
-/* Uses the above routine to output a string... */
-void puts(char *text)
-{
-    int i;
+// Tells me if the buffer cursor is in
+// the final line of the buffer.
+inline int is_eob(void) {
+	return (buf_csr + 1 == (&buffer + BUFFER_SIZE));
+}
 
-    for (i = 0; i < strlen(text); i++)
-    {
-        putch(text[i]);
-    }
+// return the number of chars to the end of the current line
+// used for blanking out the spaces when a newline is pressed.
+inline size_t eol_distance(void) {
+	return SCR_WIDTH - ((buf_csr - &buffer[0][0]) % SCR_WIDTH);
+}
+
+// Rely our specific implementation of memcpy
+// which when moving the scrollback up(?) in
+// memory isn't a problem even though the pointers
+// overlap.
+void push_scrollback(void) {
+
+	unsigned short *buf_iter, *buf_trail;
+	unsigned short *eob;
+
+	eob = &buffer + BUFFER_SIZE;
+
+	buf_trail = &buffer;
+	buf_iter = buf_trail + SCR_WIDTH;
+
+	// I could have used memcpy(buf_iter, buf_trail, SCR_WIDTH)
+	// if I had wanted to.
+	while (buf_iter < eob) {
+		*buf_trail = *buf_iter;
+		buf_trail++;
+		buf_iter++;
+	}
+
+	//blank the last line so it isn't duplicated
+	//and it's fresh and ready to write on.
+	while (buf_trail < eob) {
+		*buf_trail = blank;
+		buf_trail++;
+	}
+
+	//rewind the text insertion pointer.
+	buf_csr -= SCR_WIDTH;
+}
+
+/* put string */
+void puts(char *str) {
+	int i;
+	for (i = 0; i < strlen(str); i++)
+		putch(str[i]);
 }
 
 /* Sets the forecolor and backcolor that we will use */
-void settextcolor(unsigned char forecolor, unsigned char backcolor)
-{
-    /* Top 4 bytes are the background, bottom 4 bytes
-    *  are the foreground color */
+void settextcolor(unsigned char forecolor, unsigned char backcolor) {
+    // Top 4 bytes is background, bottom 4 bytes is foreground color
     attrib = (backcolor << 4) | (forecolor & 0x0F);
-}
-
-/* Sets our text-mode VGA pointer, then clears the screen for us */
-void init_video(void)
-{
-    textmemptr = (unsigned short *)0xB8000;
-    cls();
 }

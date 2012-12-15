@@ -1,0 +1,21 @@
+#!/bin/sh
+exec tail -n +3 $0
+
+# Menu entry for Farmix.
+# if you have a /etc/grub.d/ directory you should
+# copy this whole file there as 41_farmix and run
+# `update-grub`
+
+# else you may use this as a template and edit
+# /boot/grub/grub.cfg directory.
+
+# This file contains the path to Farmix. hd(0,1)/farmix
+# You should modify this to point to your farmix installation
+# location.
+
+menuentry 'Farmix' {
+	insmod part_msdos
+	insmod ext2
+	set root='(hd0,msdos1)'
+	multiboot /farmix.bin
+}

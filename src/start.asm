@@ -5,43 +5,43 @@
 [BITS 32]
 global start
 start:
-    mov esp, sys_stack     ; This points the stack to our new stack area
-    jmp stublet
+	mov esp, sys_stack     ; This points the stack to our new stack area
+	jmp stublet
 
 ; This part MUST be 4byte aligned, so we solve that issue using 'ALIGN 4'
 ALIGN 4
 mboot:
-    ; Multiboot macros to make a few lines later more readable
-    MULTIBOOT_PAGE_ALIGN	equ 1<<0
-    MULTIBOOT_MEMORY_INFO	equ 1<<1
-    MULTIBOOT_AOUT_KLUDGE	equ 1<<16
-    MULTIBOOT_HEADER_MAGIC	equ 0x1BADB002
-    MULTIBOOT_HEADER_FLAGS	equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE
-    MULTIBOOT_CHECKSUM	equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-    EXTERN code, bss, end
+	; Multiboot macros to make a few lines later more readable
+	MULTIBOOT_PAGE_ALIGN	equ 1<<0
+	MULTIBOOT_MEMORY_INFO	equ 1<<1
+	MULTIBOOT_AOUT_KLUDGE	equ 1<<16
+	MULTIBOOT_HEADER_MAGIC	equ 0x1BADB002
+	MULTIBOOT_HEADER_FLAGS	equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE
+	MULTIBOOT_CHECKSUM	equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+	EXTERN code, bss, end
 
-    ; This is the GRUB Multiboot header. A boot signature.
+	; This is the GRUB Multiboot header. A boot signature.
 	; It's used to *explicity* tell a multiboot compliant
 	; bootloader (e.g. grub) that this file is a valid
 	; operating system kernel binary that should be used.
-    dd MULTIBOOT_HEADER_MAGIC
-    dd MULTIBOOT_HEADER_FLAGS
-    dd MULTIBOOT_CHECKSUM
-    
-    ; AOUT kludge - must be physical addresses. Make a note of these:
-    ; The linker script fills in the data for these ones!
-    dd mboot
-    dd code
-    dd bss
-    dd end
-    dd start
+	dd MULTIBOOT_HEADER_MAGIC
+	dd MULTIBOOT_HEADER_FLAGS
+	dd MULTIBOOT_CHECKSUM
+
+	; AOUT kludge - must be physical addresses. Make a note of these:
+	; The linker script fills in the data for these ones!
+	dd mboot
+	dd code
+	dd bss
+	dd end
+	dd start
 
 ; This is an endless loop here. Make a note of this: Later on, we
 ; will insert an 'extern start', followed by 'call start', right
 ; before the 'jmp $'.
 stublet:
-    extern _start
-    ;push register eax onto stack. It is the second argument to the kernel's main()
+	extern _start
+	;push register eax onto stack. It is the second argument to the kernel's main()
 	;it contains the "magic" number (which should be 0x2BADB002). If it does equal
 	;that value then we know this kernel was booted by a "multiboot compliant bootloader".
 	;It means the value of ebx (which we now make the first arg to kernel's main function)
@@ -49,8 +49,8 @@ stublet:
 	;know about available and reserved memory on the system.
 	push eax;
 	push ebx;
-    call _start
-    jmp $
+	call _start
+	jmp $
 
 ; This will set up our new segment registers. We need to do
 ; something special in order to set CS. We do what is called a
@@ -59,24 +59,24 @@ stublet:
 global gdt_flush
 extern gp
 gdt_flush:
-    lgdt [gp]
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
-    jmp 0x08:flush2
+	lgdt [gp]
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax
+	jmp 0x08:flush2
 flush2:
-    ret
+	ret
 
 ; Loads the IDT defined in '_idtp' into the processor.
 ; This is declared in C as 'extern void idt_load();'
 global idt_load
 extern idtp
 idt_load:
-    lidt [idtp]
-    ret
+	lidt [idtp]
+	ret
 
 ; In just a few pages in this tutorial, we will add our Interrupt
 ; Service Routines (ISRs) right here!
@@ -115,221 +115,221 @@ global isr31
 
 ;  0: Divide By Zero Exception
 isr0:
-    cli
-    push byte 0
-    push byte 0
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 0
+	jmp isr_common_stub
 
 ;  1: Debug Exception
 isr1:
-    cli
-    push byte 0
-    push byte 1
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 1
+	jmp isr_common_stub
 
 ;  2: Non Maskable Interrupt Exception
 isr2:
-    cli
-    push byte 0
-    push byte 2
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 2
+	jmp isr_common_stub
 
 ;  3: Int 3 Exception
 isr3:
-    cli
-    push byte 0
-    push byte 3
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 3
+	jmp isr_common_stub
 
 ;  4: INTO Exception
 isr4:
-    cli
-    push byte 0
-    push byte 4
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 4
+	jmp isr_common_stub
 
 ;  5: Out of Bounds Exception
 isr5:
-    cli
-    push byte 0
-    push byte 5
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 5
+	jmp isr_common_stub
 
 ;  6: Invalid Opcode Exception
 isr6:
-    cli
-    push byte 0
-    push byte 6
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 6
+	jmp isr_common_stub
 
 ;  7: Coprocessor Not Available Exception
 isr7:
-    cli
-    push byte 0
-    push byte 7
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 7
+	jmp isr_common_stub
 
 ;  8: Double Fault Exception (With Error Code!)
 isr8:
-    cli
-    push byte 8
-    jmp isr_common_stub
+	cli
+	push byte 8
+	jmp isr_common_stub
 
 ;  9: Coprocessor Segment Overrun Exception
 isr9:
-    cli
-    push byte 0
-    push byte 9
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 9
+	jmp isr_common_stub
 
 ; 10: Bad TSS Exception (With Error Code!)
 isr10:
-    cli
-    push byte 10
-    jmp isr_common_stub
+	cli
+	push byte 10
+	jmp isr_common_stub
 
 ; 11: Segment Not Present Exception (With Error Code!)
 isr11:
-    cli
-    push byte 11
-    jmp isr_common_stub
+	cli
+	push byte 11
+	jmp isr_common_stub
 
 ; 12: Stack Fault Exception (With Error Code!)
 isr12:
-    cli
-    push byte 12
-    jmp isr_common_stub
+	cli
+	push byte 12
+	jmp isr_common_stub
 
 ; 13: General Protection Fault Exception (With Error Code!)
 isr13:
-    cli
-    push byte 13
-    jmp isr_common_stub
+	cli
+	push byte 13
+	jmp isr_common_stub
 
 ; 14: Page Fault Exception (With Error Code!)
 isr14:
-    cli
-    push byte 14
-    jmp isr_common_stub
+	cli
+	push byte 14
+	jmp isr_common_stub
 
 ; 15: Reserved Exception
 isr15:
-    cli
-    push byte 0
-    push byte 15
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 15
+	jmp isr_common_stub
 
 ; 16: Floating Point Exception
 isr16:
-    cli
-    push byte 0
-    push byte 16
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 16
+	jmp isr_common_stub
 
 ; 17: Alignment Check Exception
 isr17:
-    cli
-    push byte 0
-    push byte 17
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 17
+	jmp isr_common_stub
 
 ; 18: Machine Check Exception
 isr18:
-    cli
-    push byte 0
-    push byte 18
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 18
+	jmp isr_common_stub
 
 ; 19: Reserved
 isr19:
-    cli
-    push byte 0
-    push byte 19
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 19
+	jmp isr_common_stub
 
 ; 20: Reserved
 isr20:
-    cli
-    push byte 0
-    push byte 20
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 20
+	jmp isr_common_stub
 
 ; 21: Reserved
 isr21:
-    cli
-    push byte 0
-    push byte 21
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 21
+	jmp isr_common_stub
 
 ; 22: Reserved
 isr22:
-    cli
-    push byte 0
-    push byte 22
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 22
+	jmp isr_common_stub
 
 ; 23: Reserved
 isr23:
-    cli
-    push byte 0
-    push byte 23
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 23
+	jmp isr_common_stub
 
 ; 24: Reserved
 isr24:
-    cli
-    push byte 0
-    push byte 24
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 24
+	jmp isr_common_stub
 
 ; 25: Reserved
 isr25:
-    cli
-    push byte 0
-    push byte 25
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 25
+	jmp isr_common_stub
 
 ; 26: Reserved
 isr26:
-    cli
-    push byte 0
-    push byte 26
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 26
+	jmp isr_common_stub
 
 ; 27: Reserved
 isr27:
-    cli
-    push byte 0
-    push byte 27
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 27
+	jmp isr_common_stub
 
 ; 28: Reserved
 isr28:
-    cli
-    push byte 0
-    push byte 28
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 28
+	jmp isr_common_stub
 
 ; 29: Reserved
 isr29:
-    cli
-    push byte 0
-    push byte 29
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 29
+	jmp isr_common_stub
 
 ; 30: Reserved
 isr30:
-    cli
-    push byte 0
-    push byte 30
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 30
+	jmp isr_common_stub
 
 ; 31: Reserved
 isr31:
-    cli
-    push byte 0
-    push byte 31
-    jmp isr_common_stub
+	cli
+	push byte 0
+	push byte 31
+	jmp isr_common_stub
 
 
 ; We call a C function in here. We need to let the assembler know
@@ -340,28 +340,28 @@ extern fault_handler
 ; up for kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
 isr_common_stub:
-    pusha
-    push ds
-    push es
-    push fs
-    push gs
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov eax, esp
-    push eax
-    mov eax, fault_handler
-    call eax
-    pop eax
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    popa
-    add esp, 8
-    iret
+	pusha
+	push ds
+	push es
+	push fs
+	push gs
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov eax, esp
+	push eax
+	mov eax, fault_handler
+	call eax
+	pop eax
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
+	add esp, 8
+	iret
 
 global irq0
 global irq1
@@ -382,150 +382,150 @@ global irq15
 
 ; 32: IRQ0
 irq0:
-    cli
-    push byte 0
-    push byte 32
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 32
+	jmp irq_common_stub
 
 ; 33: IRQ1
 irq1:
-    cli
-    push byte 0
-    push byte 33
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 33
+	jmp irq_common_stub
 
 ; 34: IRQ2
 irq2:
-    cli
-    push byte 0
-    push byte 34
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 34
+	jmp irq_common_stub
 
 ; 35: IRQ3
 irq3:
-    cli
-    push byte 0
-    push byte 35
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 35
+	jmp irq_common_stub
 
 ; 36: IRQ4
 irq4:
-    cli
-    push byte 0
-    push byte 36
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 36
+	jmp irq_common_stub
 
 ; 37: IRQ5
 irq5:
-    cli
-    push byte 0
-    push byte 37
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 37
+	jmp irq_common_stub
 
 ; 38: IRQ6
 irq6:
-    cli
-    push byte 0
-    push byte 38
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 38
+	jmp irq_common_stub
 
 ; 39: IRQ7
 irq7:
-    cli
-    push byte 0
-    push byte 39
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 39
+	jmp irq_common_stub
 
 ; 40: IRQ8
 irq8:
-    cli
-    push byte 0
-    push byte 40
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 40
+	jmp irq_common_stub
 
 ; 41: IRQ9
 irq9:
-    cli
-    push byte 0
-    push byte 41
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 41
+	jmp irq_common_stub
 
 ; 42: IRQ10
 irq10:
-    cli
-    push byte 0
-    push byte 42
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 42
+	jmp irq_common_stub
 
 ; 43: IRQ11
 irq11:
-    cli
-    push byte 0
-    push byte 43
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 43
+	jmp irq_common_stub
 
 ; 44: IRQ12
 irq12:
-    cli
-    push byte 0
-    push byte 44
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 44
+	jmp irq_common_stub
 
 ; 45: IRQ13
 irq13:
-    cli
-    push byte 0
-    push byte 45
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 45
+	jmp irq_common_stub
 
 ; 46: IRQ14
 irq14:
-    cli
-    push byte 0
-    push byte 46
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 46
+	jmp irq_common_stub
 
 ; 47: IRQ15
 irq15:
-    cli
-    push byte 0
-    push byte 47
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte 47
+	jmp irq_common_stub
 
 extern irq_handler
 
 irq_common_stub:
-    pusha
-    push ds
-    push es
-    push fs
-    push gs
+	pusha
+	push ds
+	push es
+	push fs
+	push gs
 
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov eax, esp
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov eax, esp
 
-    push eax
-    mov eax, irq_handler
-    call eax
-    pop eax
+	push eax
+	mov eax, irq_handler
+	call eax
+	pop eax
 
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    popa
-    add esp, 8
-    iret
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
+	add esp, 8
+	iret
 
 ; Here is the definition of our BSS section. Right now, we'll use
 ; it just to store the stack. Remember that a stack actually grows
 ; downwards, so we declare the size of the data before declaring
 ; the identifier 'sys_stack'
 SECTION .bss
-    resb 8192               ; This reserves 8KBytes of memory here
+	resb 8192         ; This reserves 8KBytes of memory here
 sys_stack:
 

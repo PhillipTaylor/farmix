@@ -37,11 +37,11 @@ unsigned short *view_offset; //which subset of the buffer we're viewing.
 int scroll_lock; //move viewport on print
 
 void init_video(void) {
-    textmemptr = (unsigned short *)0xB8000;
-    blank = 0x20 | (attrib << 8);
+	textmemptr = (unsigned short *)0xB8000;
+	blank = 0x20 | (attrib << 8);
 	buf_csr = &buffer;
 	view_offset = &buffer;
-    cls();
+	cls();
 	scroll_lock = 0;
 	redraw();
 }
@@ -92,18 +92,18 @@ void redraw(void) {
 /* Updates the hardware cursor: the little blinking line
 *  on the screen under the last character pressed! */
 void move_csr(void) {
-    unsigned temp;
+	unsigned temp;
 
 	if (view_offset < buf_csr && view_offset + SCR_SIZE > buf_csr)
 		temp = buf_csr - view_offset;
 	else
 		temp = 0;
 
-    //more info at http://www.brackeen.com/home/vga
-    outportb(0x3D4, 14);
-    outportb(0x3D5, temp >> 8);
-    outportb(0x3D4, 15);
-    outportb(0x3D5, temp);
+	//more info at http://www.brackeen.com/home/vga
+	outportb(0x3D4, 14);
+	outportb(0x3D5, temp >> 8);
+	outportb(0x3D4, 15);
+	outportb(0x3D5, temp);
 }
 
 // clear everything including scrollback
@@ -122,7 +122,7 @@ void clear_screen(void) {
 void putch(char ch) {
 	size_t i;
 	int j;
-    unsigned att = attrib << 8;
+	unsigned att = attrib << 8;
 	unsigned short *eob;
 	unsigned short *eolwrite;
 
@@ -209,6 +209,6 @@ void puts(char *str) {
 
 /* Sets the forecolor and backcolor that we will use */
 void settextcolor(unsigned char forecolor, unsigned char backcolor) {
-    // Top 4 bytes is background, bottom 4 bytes is foreground color
-    attrib = (backcolor << 4) | (forecolor & 0x0F);
+	// Top 4 bytes is background, bottom 4 bytes is foreground color
+	attrib = (backcolor << 4) | (forecolor & 0x0F);
 }

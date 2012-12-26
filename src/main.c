@@ -11,14 +11,14 @@ void ramdisk_testing();
 
 unsigned char inportb (unsigned short _port)
 {
-    unsigned char rv;
-    __asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
-    return rv;
+	unsigned char rv;
+	__asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
+	return rv;
 }
 
 void outportb (unsigned short _port, char _data)
 {
-    __asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
+	__asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
 }
 
 void print_welcome()
@@ -55,13 +55,13 @@ void _start(void *grub1, unsigned int magic)
 
 	mem_req = NULL;
 
-    gdt_install();
-    idt_install();
-    isrs_install();
-    irq_install();
-    init_video();
+	gdt_install();
+	idt_install();
+	isrs_install();
+	irq_install();
+	init_video();
 	init_memory(grub1, magic);
-	
+
 	//testing malloc
 	mem_req = (int*) malloc(sizeof(int));
 	//mem_req = OUT_OF_MEMORY;
@@ -73,7 +73,7 @@ void _start(void *grub1, unsigned int magic)
 		kprintf("mem_req points to %x\n", mem_req);
 		kprintf("mem_req has value of %i\n", *mem_req);
 	}
-	
+
 	mem_req = (int*) malloc(16);
 	//mem_req = (int*) malloc(99);
 	//mem_req = (int*) malloc(1024);
@@ -84,14 +84,14 @@ void _start(void *grub1, unsigned int magic)
 	// reprint memory map
 	print_memory_map();
 	print_welcome();
-    //timer_install();
-    keyboard_install();
+	//timer_install();
+	keyboard_install();
 
 	ramdisk_testing();
 
-    __asm__ __volatile__ ("sti");
+	__asm__ __volatile__ ("sti");
 
-    for (;;);
+	for (;;);
 }
 
 void ramdisk_testing() {
@@ -127,3 +127,4 @@ void ramdisk_testing() {
 	puts(t);
 
 }
+

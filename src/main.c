@@ -112,10 +112,10 @@ void ramdisk_testing() {
 	//write some data!
 	kprintf("writing to ramdisk:");
 	puts(t);
-	bc = driv.fp_write(&driv, 0xA314, t, 20);
+	bc = driv.fp_write(&driv, (void*)0xA314, t, 20);
 	kprintf("bytes copied: %i\n", bc);
 
-	bc = driv.fp_read(&driv, 0xA314, d, 20);
+	bc = driv.fp_read(&driv, (void*)0xA314, d, 20);
 	kprintf("bytes copied: %i\n", bc);
 
 	kprintf("output: ");

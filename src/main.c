@@ -1,9 +1,13 @@
 #include <system.h>
 #include <const.h>
 
+#include <driver.h>
+
 #ifndef OS_VERSION
 	#define OS_VERSION "unspecified"
 #endif
+
+void ramdisk_testing();
 
 unsigned char inportb (unsigned short _port)
 {
@@ -83,8 +87,43 @@ void _start(void *grub1, unsigned int magic)
     //timer_install();
     keyboard_install();
 
+	ramdisk_testing();
+
     __asm__ __volatile__ ("sti");
 
     for (;;);
 }
 
+void ramdisk_testing() {
+
+	struct drv_device driv;
+	char tx[20];
+	char output[20];
+	char *t = &tx[0];
+	char *d = &output[0];
+	int bc;
+
+	t = ">> my data <<";
+	ramdisk_install(&driv);
+	print_memory_map();
+
+	kprintf("ram disk size >> %x\n", driv.size);
+	kprintf("ram disk files open >> %x\n", driv.files_open);
+
+	driv.fp_open(&driv, "/asd/dsa.pdf", 'r');
+
+	kprintf("ram disk files open >> %x\n", driv.files_open);
+
+	//write some data!
+	kprintf("writing to ramdisk:");
+	puts(t);
+	bc = driv.fp_write(&driv, 0xA314, t, 20);
+	kprintf("bytes copied: %i\n", bc);
+
+	bc = driv.fp_read(&driv, 0xA314, d, 20);
+	kprintf("bytes copied: %i\n", bc);
+
+	kprintf("output: ");
+	puts(t);
+
+}

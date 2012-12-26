@@ -2,9 +2,7 @@
 #ifndef GENERIC_CONSTANTS
 #define GENERIC_CONSTANTS
 
-#define NULL 0
-
-typedef int BOOL;
+#define NULL ((void*)0)
 
 #define TRUE 1
 #define FALSE 0

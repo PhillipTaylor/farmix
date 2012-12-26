@@ -1,7 +1,8 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 
-typedef unsigned int size_t;
+#include <types.h>
+#include <driver.h>
 
 /* This defines what the stack looks like after an ISR was running */
 struct regs
@@ -17,7 +18,7 @@ extern unsigned char inportb (unsigned short _port);
 extern void outportb (unsigned short _port, char _data);
 
 /* MEMORY/ */
-#define OUT_OF_MEMORY -1
+#define OUT_OF_MEMORY ((void*)-1)
 extern unsigned int grub_boot_memory_map;
 extern unsigned int grub_boot_magic_number;
 extern void *memcpy(void *dest, const void *src, size_t count);
@@ -67,5 +68,9 @@ extern void timer_install();
 
 /* KEYBOARD.C */
 extern void keyboard_install();
+
+/* RAMDISK.C */
+#define E_BADADDR -1
+void ramdisk_install(struct drv_device *dev);
 
 #endif

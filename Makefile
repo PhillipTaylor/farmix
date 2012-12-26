@@ -26,9 +26,10 @@ compile: clean
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/irq.o $(SRC_DIR)/irq.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/timer.o $(SRC_DIR)/timer.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/kb.o $(SRC_DIR)/kb.c
+	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/ramdisk.o $(SRC_DIR)/ramdisk.c
 
 link: compile
-	ld -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/{mem_utils.o,mem_api.o,mem_detect.o,start.o,main.o,str_utils.o,scrn.o,gdt.o,idt.o,isrs.o,irq.o,timer.o,kb.o}
+	ld -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/{mem_utils.o,mem_api.o,mem_detect.o,start.o,main.o,str_utils.o,scrn.o,gdt.o,idt.o,isrs.o,irq.o,timer.o,kb.o,ramdisk.o}
 
 clean: prev_kernel
 	rm -rf $(BUILD_DIR)

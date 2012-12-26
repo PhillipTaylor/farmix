@@ -1,5 +1,6 @@
 #include <const.h>
 #include <system.h>
+#include <err_def.h>
 #include "mem_struct.h"
 
 struct fm_mem_block fm_top_level_memory[MEM_ARRAY_SIZE];
@@ -122,7 +123,7 @@ void *malloc(unsigned int num_bytes) {
 	}
 
 	kprintf("no block big enough\n");
-	return (void*) OUT_OF_MEMORY;
+	return E_OUT_OF_MEMORY;
 
 }
 

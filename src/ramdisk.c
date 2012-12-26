@@ -7,6 +7,7 @@
 
 #include <system.h>
 #include <driver.h>
+#include <err_def.h>
 
 int open(struct drv_device *dev, void *target, char mode);
 int close(struct drv_device *dev, void *target);
@@ -49,7 +50,7 @@ size_t read(struct drv_device *dev, void *target, void *buffer, size_t bytes) {
 	char *max = (char *)dev->base_addr + (size_t)dev->size;
 
 	if (src > max)
-		return E_BADADDR; //don't copy, bad read command.
+		return E_DISK_BOUNDS ; //don't copy, bad read command.
 	
 	memcpy(buffer, src, bytes);
 	return bytes;
@@ -62,7 +63,7 @@ size_t write(struct drv_device *dev, void *target, void *buffer, size_t bytes) {
 	char *max = (char *)dev->base_addr + (size_t)dev->size;
 
 	if (src > max)
-		return E_BADADDR; //don't copy, bad write command.
+		return E_DISK_BOUNDS ; //don't copy, bad write command.
 	
 	memcpy(src, buffer, bytes);
 	return bytes;

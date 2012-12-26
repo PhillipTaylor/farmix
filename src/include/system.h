@@ -18,7 +18,6 @@ extern unsigned char inportb (unsigned short _port);
 extern void outportb (unsigned short _port, char _data);
 
 /* MEMORY/ */
-#define OUT_OF_MEMORY ((void*)-1)
 extern unsigned int grub_boot_memory_map;
 extern unsigned int grub_boot_magic_number;
 extern void *memcpy(void *dest, const void *src, size_t count);
@@ -70,7 +69,6 @@ extern void timer_install();
 extern void keyboard_install();
 
 /* RAMDISK.C */
-#define E_BADADDR -1
 void ramdisk_install(struct drv_device *dev);
 
 #endif

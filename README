@@ -24,7 +24,7 @@
     Required tools for the build sequence:
     gcc / make / diffstat / git / nasm
 
-    Farmix might be a trademark of Phillip Taylor.
+    Farmix is trademark of Phillip Taylor.
 
     Farmix is licensed under the GPL version 2.
     Read it here: http://www.gnu.org/licenses/gpl-2.0.html

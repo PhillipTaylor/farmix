@@ -1,4 +1,5 @@
 COMPILER=gcc
+SHELL=sh
 
 OS_VERSION="0.1"
 
@@ -28,8 +29,23 @@ compile: clean
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/kb.o $(SRC_DIR)/kb.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/ramdisk.o $(SRC_DIR)/ramdisk.c
 
+OBJECT_FILES := $(BUILD_DIR)/mem_utils.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/mem_api.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/mem_detect.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/start.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/main.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/str_utils.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/scrn.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/gdt.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/idt.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/isrs.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/irq.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/timer.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/kb.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/ramdisk.o
+
 link: compile
-	ld -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/{mem_utils.o,mem_api.o,mem_detect.o,start.o,main.o,str_utils.o,scrn.o,gdt.o,idt.o,isrs.o,irq.o,timer.o,kb.o,ramdisk.o}
+	ld -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel.bin $(OBJECT_FILES)
 
 clean: prev_kernel
 	rm -rf $(BUILD_DIR)
@@ -41,6 +57,6 @@ active_kernel:
 	cp $(BUILD_DIR)/kernel.bin $(INSTALL_TO)
 
 disassemble: compile
-	objdump -d $(BUILD_DIR)/*.o >> $(BUILD_DIR)/disassemble.asm
+	objdump -d $(OBJECT_FILES) >> $(BUILD_DIR)/disassemble.asm
 	less $(BUILD_DIR)/disassemble.asm
 

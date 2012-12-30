@@ -64,11 +64,15 @@ extern void irq_install();
 /* TIMER.C */
 extern void timer_wait(int ticks);
 extern void timer_install();
+extern void timer_install_tick_handler(void (*callback)());
 
 /* KEYBOARD.C */
 extern void keyboard_install();
 
 /* RAMDISK.C */
-void ramdisk_install(struct drv_device *dev);
+extern void ramdisk_install(struct drv_device *dev);
+
+/* ATA_PIO.C */
+extern void ata_pio_install();
 
 #endif

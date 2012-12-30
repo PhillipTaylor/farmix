@@ -62,6 +62,8 @@ void _start(void *grub1, unsigned int magic)
 	irq_install();
 	init_video();
 	init_memory(grub1, magic);
+	timer_install();
+	ata_pio_install();
 
 	//testing malloc
 	mem_req = (int*) malloc(sizeof(int));

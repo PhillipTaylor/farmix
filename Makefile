@@ -28,6 +28,7 @@ compile: clean
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/timer.o $(SRC_DIR)/timer.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/kb.o $(SRC_DIR)/kb.c
 	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/ramdisk.o $(SRC_DIR)/ramdisk.c
+	$(COMPILER) $(BUILD_ARGS) -o $(BUILD_DIR)/ata_pio.o $(SRC_DIR)/ata_pio.c
 
 OBJECT_FILES := $(BUILD_DIR)/mem_utils.o
 OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/mem_api.o
@@ -43,6 +44,7 @@ OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/irq.o
 OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/timer.o
 OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/kb.o
 OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/ramdisk.o
+OBJECT_FILES := $(OBJECT_FILES) $(BUILD_DIR)/ata_pio.o
 
 link: compile
 	ld -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel.bin $(OBJECT_FILES)

@@ -37,8 +37,7 @@ int number_to_str(char *buffer, int max_size, int number, int base);
 /*   %X   */ int unsigned_long_long_to_hex(char *buffer, int max_size, unsigned long long number);
 /*   %U   */ int unsigned_long_long_to_str(char *buffer, int max_size, unsigned long long number);
 
-void kprintf(char *format, ...)
-{
+void kprintf(char *format, ...) {
 	char buffer[KPRINTF_BUFFER_SIZE];
 
 	int bpos = 0; /* position to write to in buffer */
@@ -67,8 +66,7 @@ void kprintf(char *format, ...)
 	arg = (void*) (&format + arg_offset);
 	llu = (unsigned long long*) *(&format + arg_offset);
 
-	while (1)
-	{
+	while (1) {
 		ch = format[fpos++];
 	
 		if (ch == '\0')
@@ -76,8 +74,7 @@ void kprintf(char *format, ...)
 
 		if (ch != '%')
 			buffer[bpos++] = ch;
-		else
-		{
+		else {
 			ch = format[fpos++];
 			if (ch == 's')
 				bpos += strcpy(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, (char*)arg);
@@ -95,8 +92,7 @@ void kprintf(char *format, ...)
 				bpos += unsigned_long_long_to_hex(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *llu);
 			} else if (ch == 'U') {
 				bpos += unsigned_long_long_to_str(&buffer[bpos], KPRINTF_BUFFER_SIZE - bpos, *llu);
-			} else
-			{
+			} else {
 				puts("invalid char ");
 				putch(ch);
 				puts(" passed to kprintf\n");
@@ -112,8 +108,7 @@ void kprintf(char *format, ...)
 	puts(buffer);
 }
 
-int kbprintf(char *buffer, int max_size, const char* format, ...)
-{
+int kbprintf(char *buffer, int max_size, const char* format, ...) {
 
 	int bpos = 0; /* buffer position */
 	int fpos = 0; /* format position */
@@ -130,8 +125,7 @@ int kbprintf(char *buffer, int max_size, const char* format, ...)
 	arg = *(&format + arg_offset);
 	llu = (unsigned long long*) *(&format + arg_offset);
 
-	while (1)
-	{
+	while (1) {
 		ch = format[fpos++]; // next char.
 	
 		if (ch == '\0')
@@ -158,8 +152,7 @@ int kbprintf(char *buffer, int max_size, const char* format, ...)
 				bpos += unsigned_long_long_to_hex((char*)buffer + bpos, max_size - bpos, *llu);
 			} else if (ch == 'U') {
 				bpos += unsigned_long_long_to_str((char*)buffer + bpos, max_size - bpos, *llu);
-			} else
-			{
+			} else {
 				puts("invalid char ");
 				putch(ch);
 				puts(" passed to kprintf\n");
@@ -175,23 +168,19 @@ int kbprintf(char *buffer, int max_size, const char* format, ...)
 	return bpos;
 }
 
-int int_to_str(char *buffer, int max_size, int number)
-{
+int int_to_str(char *buffer, int max_size, int number) {
 	return number_to_str(buffer, max_size, number, BASE_DECIMAL);
 }
 
-int int_to_hex_str(char *buffer, int max_size, int number)
-{
+int int_to_hex_str(char *buffer, int max_size, int number) {
 	return number_to_str(buffer, max_size, number, BASE_HEX);
 }
 
-int int_to_oct_str(char *buffer, int max_size, int number)
-{
+int int_to_oct_str(char *buffer, int max_size, int number) {
 	return number_to_str(buffer, max_size, number, BASE_OCT);
 }
 
-int unsigned_long_long_to_hex(char *buffer, int max_size, unsigned long long number)
-{
+int unsigned_long_long_to_hex(char *buffer, int max_size, unsigned long long number) {
 	return ull_number_to_str(buffer, max_size, number, BASE_HEX);
 }
 
@@ -215,8 +204,7 @@ int ull_number_to_str(char *buffer, int max_size, unsigned long long number, int
 
 #define NUMERIC_BUFF_SIZE (11 * (ADDRESS_SIZE / 32))
 
-int number_to_str(char *buffer, int max_size, int number, int base)
-{
+int number_to_str(char *buffer, int max_size, int number, int base) {
 	char *char_map = "0123456789ABCDEF";
 
 	int remain = 0;
@@ -225,10 +213,8 @@ int number_to_str(char *buffer, int max_size, int number, int base)
 	int bpos = 0;
 
 	/* with this method of parsing, the digits come out backwards */
-	do 
-	{
-		if (stk_pnt > NUMERIC_BUFF_SIZE)
-		{
+	do {
+		if (stk_pnt > NUMERIC_BUFF_SIZE) {
 			puts("Number has too many digits to be printed. Increasse NUMBERIC_BUFF_SIZE\n");
 			return 0;
 		}
@@ -239,8 +225,7 @@ int number_to_str(char *buffer, int max_size, int number, int base)
 	} while (number > 0);
 
 	/* before writing...ensure we have enough room */
-	if (stk_pnt > max_size)
-	{
+	if (stk_pnt > max_size) {
 		//error. do something?
 		puts("number_to_str passed number with too many digits to go into buffer\n");
 		//printf("error. stk_pnt > max_size (%d > %d)\n", stk_pnt, max_size);
@@ -256,8 +241,7 @@ int number_to_str(char *buffer, int max_size, int number, int base)
 
 /* return the number of chars appended */
 
-int strcpy(char *buffer, int max_size, char *append)
-{
+int strcpy(char *buffer, int max_size, char *append) {
 
 	int i = 0, j;
 
@@ -267,8 +251,7 @@ int strcpy(char *buffer, int max_size, char *append)
 	return j;
 }
 
-int strcat(char *buffer, int max_size, char *append)
-{
+int strcat(char *buffer, int max_size, char *append) {
 
 	int i, j;
 
@@ -281,8 +264,7 @@ int strcat(char *buffer, int max_size, char *append)
 	return j;
 }
 
-size_t strlen(const char *str)
-{
+size_t strlen(const char *str) {
     size_t retval;
     for (retval = 0; *str != '\0'; str++)
 		retval++;

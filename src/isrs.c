@@ -45,8 +45,7 @@ extern void isr31();
 *  running in ring 0 (kernel level), and has the lower 5 bits
 *  set to the required '14', which is represented by 'E' in
 *  hex. */
-void isrs_install()
-{
+void isrs_install() {
     idt_set_gate(0, (unsigned)isr0, 0x08, 0x8E);
     idt_set_gate(1, (unsigned)isr1, 0x08, 0x8E);
     idt_set_gate(2, (unsigned)isr2, 0x08, 0x8E);
@@ -88,8 +87,7 @@ void isrs_install()
 *  corresponds to each and every exception. We get the correct
 *  message by accessing like:
 *  exception_message[interrupt_number] */
-char *exception_messages[] =
-{
+char *exception_messages[] = {
     "Division By Zero",
     "Debug",
     "Non Maskable Interrupt",
@@ -133,10 +131,8 @@ char *exception_messages[] =
 *  endless loop. All ISRs disable interrupts while they are being
 *  serviced as a 'locking' mechanism to prevent an IRQ from
 *  happening and messing up kernel data structures */
-void fault_handler(struct regs *r)
-{
-    if (r->int_no < 32)
-    {
+void fault_handler(struct regs *r) {
+    if (r->int_no < 32) {
         puts(exception_messages[r->int_no]);
         puts(" Exception. System Halted!\n");
         for (;;);

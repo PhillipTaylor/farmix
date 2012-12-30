@@ -22,8 +22,7 @@ void timer_install_tick_handler(void (*tick_handler)()) {
 *  increment the 'timer_ticks' variable every time the
 *  timer fires. By default, the timer fires 18.222 times
 *  per second. */
-void timer_handler(struct regs *r)
-{
+void timer_handler(struct regs *r) {
 	unsigned int i;
 
 	timer_ticks++;
@@ -38,16 +37,14 @@ void timer_handler(struct regs *r)
 }
 
 /* This will continuously loop until the given time has been reached */
-void timer_wait(int ticks)
-{
+void timer_wait(int ticks) {
 	unsigned long eticks;
 
 	eticks = timer_ticks + ticks;
 	while(timer_ticks < eticks);
 }
 
-void timer_install()
-{
+void timer_install() {
 	/* Installs 'timer_handler' to IRQ0 */
 	irq_install_handler(0, timer_handler);
 }

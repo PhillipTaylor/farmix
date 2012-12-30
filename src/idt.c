@@ -1,8 +1,7 @@
 #include <system.h>
 
 /* Defines an IDT entry */
-struct idt_entry
-{
+struct idt_entry {
 	unsigned short base_lo;
 	unsigned short sel;
 	unsigned char always0;
@@ -10,8 +9,7 @@ struct idt_entry
 	unsigned short base_hi;
 } __attribute__((packed));
 
-struct idt_ptr
-{
+struct idt_ptr {
 	unsigned short limit;
 	unsigned int base;
 } __attribute__((packed));
@@ -30,8 +28,7 @@ extern void idt_load();
 
 /* Use this function to set an entry in the IDT. Alot simpler
 *  than twiddling with the GDT ;) */
-void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags)
-{
+void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags) {
 	/* The interrupt routine's base address */
 	idt[num].base_lo = (base & 0xFFFF);
 	idt[num].base_hi = (base >> 16) & 0xFFFF;
@@ -44,8 +41,7 @@ void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, uns
 }
 
 /* Installs the IDT */
-void idt_install()
-{
+void idt_install() {
 	/* Sets the special IDT pointer up, just like in 'gdt.c' */
 	idtp.limit = (sizeof (struct idt_entry) * 256) - 1;
 	idtp.base = &idt;
@@ -57,3 +53,4 @@ void idt_install()
 	/* Points the processor's internal register to the new IDT */
 	idt_load();
 }
+

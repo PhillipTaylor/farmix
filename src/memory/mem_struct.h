@@ -32,7 +32,7 @@ struct fm_mem_reserved {
 };
 
 struct fm_mem_block {
-	BOOL active; //0 = inactive, 1 = active
+	BOOL active;
 	unsigned long memory_start;
 	unsigned long memory_end;
 	struct fm_mem_reserved *head;

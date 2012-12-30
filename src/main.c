@@ -10,20 +10,17 @@
 
 void ramdisk_testing();
 
-unsigned char inportb (unsigned short _port)
-{
+unsigned char inportb (unsigned short _port) {
 	unsigned char rv;
 	__asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
 	return rv;
 }
 
-void outportb (unsigned short _port, char _data)
-{
+void outportb (unsigned short _port, char _data) {
 	__asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
 }
 
-void print_welcome()
-{
+void print_welcome() {
 
 	puts("    888888888888888888888888888888888888888888888888888888888888888888888  \n");
 	puts("    888888888888888888888888888888888888888888888888888888888888888888888  \n");
@@ -50,8 +47,7 @@ void print_welcome()
 
 }
 
-void _start(void *grub1, unsigned int magic)
-{
+void _start(void *grub1, unsigned int magic) {
 	int *mem_req;
 
 	mem_req = NULL;

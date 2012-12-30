@@ -20,10 +20,10 @@
 
     This is the source code for Farmix, my hobby operating system!
 
-	The document SETUP contains all the instructions for building, and
-	running Farmix as well as listing its supported platforms.
+    The document SETUP contains all the instructions for building, and
+    running Farmix as well as listing its supported platforms.
 
-	Farmix is trademark of Phillip Taylor.
+    Farmix is trademark of Phillip Taylor.
     Farmix is licensed under the GPL version 2.
     Read it here: http://www.gnu.org/licenses/gpl-2.0.html
 

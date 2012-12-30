@@ -2,11 +2,6 @@
 #include <config.h>
 #include <const.h>
 
-/*
- *	KPRINTF_BUFFER_SIZE used by kprintf which has a max line size of 255.
- *	We _have_ to use a fixed size buffer because it's used before malloc()
- *	becomes available.
-*/
 #define KPRINTF_BUFFER_SIZE 255
 
 /* kprintf / kbprintf interpretations:
@@ -22,7 +17,7 @@
 */
 
 
-/* these functions actually convert numbers to strings */
+/* these functions actually do the work of converting numbers to strings */
 int ull_number_to_str(char *buffer, int max_size, unsigned long long number, int base);
 int number_to_str(char *buffer, int max_size, int number, int base);
 
@@ -237,6 +232,7 @@ int number_to_str(char *buffer, int max_size, int number, int base) {
 
 /* return the number of chars appended */
 
+//TODO: warning it should stop at max_size to prevent buffer overflow
 int strcpy(char *buffer, int max_size, char *append) {
 
 	int i = 0, j;

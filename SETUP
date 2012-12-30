@@ -1,0 +1,35 @@
+
+This document details what's required to build and run Farmix.
+
+PLATFORM SUPPORT
+----------------
+
+Farmix runs on 32 bit x86 machines. It currently does not work on any x86_64 environments.
+Farmix will run inside QEMU and VirtualBox.
+
+BUILD PREREQUISITS
+------------------
+
+Farmix is written on, and build on Linux systems. The following
+tools are required:
+
+	* make
+	* gcc
+	* nasm
+
+COMPILING
+---------
+
+	Assuming you have installed the tools above, run `make` in
+	the root directory for Farmix and it will build the entire
+	system and output the file: ./build/farmix.bin
+
+INSTALLING
+----------
+
+	Farmix requires a system with a multiboot compliant bootloader
+	such as grub. In ./install there is a file named 41_Farmix
+	which contains a sample grub entry. By opening your own grub
+	configuration and inspecting your entry for Linux you should
+	be able to figure out the correct values required to boot farmix.
+

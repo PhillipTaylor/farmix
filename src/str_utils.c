@@ -9,10 +9,6 @@
 */
 #define KPRINTF_BUFFER_SIZE 255
 
-#define BASE_DECIMAL 10
-#define BASE_HEX 16
-#define BASE_OCT 8
-
 /* kprintf / kbprintf interpretations:
  * %s = char*
  * %c = char (unsigned)

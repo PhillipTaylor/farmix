@@ -13,8 +13,11 @@ struct regs {
 };
 
 /* MAIN.C */
-extern unsigned char inportb (unsigned short _port);
-extern void outportb (unsigned short _port, char _data);
+extern unsigned char inb (unsigned short _port);
+extern void outb (unsigned short _port, char _data);
+extern unsigned short inw (unsigned short _port);
+extern void outw (unsigned short _port, unsigned int _data);
+extern void stall(int times);
 
 /* MEMORY/ */
 extern unsigned int grub_boot_memory_map;
@@ -63,11 +66,16 @@ extern void irq_install();
 /* TIMER.C */
 extern void timer_wait(int ticks);
 extern void timer_install();
+extern void timer_install_tick_handler(void (*callback)());
 
 /* KEYBOARD.C */
 extern void keyboard_install();
 
 /* RAMDISK.C */
-void ramdisk_install(struct drv_device *dev);
+extern void ramdisk_install(struct drv_device *dev);
+
+/* ATA_PIO.C */
+extern void ata_pio_install();
+extern void ata_pio_read(size_t lba, void *buffer, size_t count);
 
 #endif

@@ -10,14 +10,32 @@
 
 void ramdisk_testing();
 
-unsigned char inportb (unsigned short _port) {
+unsigned char inb (unsigned short _port) {
 	unsigned char rv;
 	__asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
 	return rv;
 }
 
-void outportb (unsigned short _port, char _data) {
+void outb (unsigned short _port, char _data) {
 	__asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
+}
+
+unsigned short inw (unsigned short _port) {
+	unsigned short rv;
+	__asm__ __volatile__ ("inw %1, %0" : "=a" (rv) : "dN" (_port));
+	return rv;
+}
+
+void outw (unsigned short _port, unsigned int _data) {
+	__asm__ __volatile__ ("outw %1, %0" : : "dN" (_port), "a" (_data));
+}
+
+void stall(int times) {
+    // port 0x80 is used for 'checkpoints' during POST.
+	// The Linux kernel seems to think it is free for use :-/
+	do {
+		asm volatile( "outb %%al, $0x80" : : "a"(0) );
+	} while (times-- > 0);
 }
 
 void print_welcome() {
@@ -59,28 +77,8 @@ void _start(void *grub1, unsigned int magic) {
 	init_video();
 	init_memory(grub1, magic);
 	timer_install();
-	ata_pio_install();
 
-	//testing malloc
-	mem_req = (int*) malloc(sizeof(int));
-
-	if (mem_req == E_OUT_OF_MEMORY)
-		kprintf("didn't get a usable address back\n");
-	else {
-		*mem_req = 6;
-		kprintf("mem_req points to %x\n", mem_req);
-		kprintf("mem_req has value of %i\n", *mem_req);
-	}
-
-	mem_req = (int*) malloc(16);
-
-	// reprint memory map
-	print_memory_map();
-	print_welcome();
-	//timer_install();
 	keyboard_install();
-
-	ramdisk_testing();
 
 	__asm__ __volatile__ ("sti");
 

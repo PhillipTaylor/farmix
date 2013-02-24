@@ -52,7 +52,7 @@ void keyboard_handler(struct regs *r) {
 	unsigned char scancode;
 
 	/* Read from the keyboard's data buffer */
-	scancode = inportb(0x60);
+	scancode = inb(0x60);
 
 	/* If the top bit of the byte we read from the keyboard is
 	*  set, that means that a key has just been released */

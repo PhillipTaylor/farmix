@@ -13,8 +13,11 @@ struct regs {
 };
 
 /* MAIN.C */
-extern unsigned char inportb (unsigned short _port);
-extern void outportb (unsigned short _port, char _data);
+extern unsigned char inb (unsigned short _port);
+extern void outb (unsigned short _port, char _data);
+extern unsigned short inw (unsigned short _port);
+extern void outw (unsigned short _port, unsigned int _data);
+extern void stall(int times);
 
 /* MEMORY/ */
 extern unsigned int grub_boot_memory_map;
@@ -73,5 +76,6 @@ extern void ramdisk_install(struct drv_device *dev);
 
 /* ATA_PIO.C */
 extern void ata_pio_install();
+extern void ata_pio_read(size_t lba, void *buffer, size_t count);
 
 #endif

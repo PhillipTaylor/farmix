@@ -9,6 +9,7 @@
 #endif
 
 void ramdisk_testing();
+void disktesting();
 
 unsigned char inb (unsigned short _port) {
 	unsigned char rv;
@@ -77,10 +78,11 @@ void _start(void *grub1, unsigned int magic) {
 	init_video();
 	init_memory(grub1, magic);
 	timer_install();
-
 	keyboard_install();
+	disktesting();
 
-	__asm__ __volatile__ ("sti");
+	//works on eeepc, not on VBox
+	//__asm__ __volatile__ ("sti");
 
 	for (;;);
 }
@@ -116,6 +118,30 @@ void ramdisk_testing() {
 
 	kprintf("output: ");
 	puts(t);
+
+}
+
+void disktesting() {
+
+	size_t lba = 1021956;
+	char buffer[256];
+	char *p = &buffer[0];
+	int i;
+
+	cls();
+	puts("reading disk...\n");
+
+	memset(p, 0, 256); //set to blank
+
+	ata_pio_read(lba, p, 1); //read from disk
+
+	//print it out in hex
+	puts("ata_pio_read_finished. data as below:\n");
+	for (i = 0; i < 13; i++) {
+		kprintf("%x ", buffer[i]);
+	}
+	kprintf("\n");
+	kprintf(&buffer[0]);
 
 }
 

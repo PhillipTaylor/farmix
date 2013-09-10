@@ -1,6 +1,6 @@
 
 /*
- * Farmix implementations of an ATA disk driver, using shitty ATA PIO.
+ * Farmix implementations of an ATA disk driver using 28bit PIO (Programmed Input/Output)
 */
 
 #include <system.h>
@@ -12,19 +12,12 @@ unsigned short disk_info[256];
 BOOL pio_48_supported = FALSE;
 unsigned int sector_count = 0;
 
-
-/* called 18 times per second by timer.c so we can poll the hard disk */
-void ata_pio_poller();
-void ata_pio_disk_reset();
-
-
 void ata_pio_install() {
 	char detect;
 	unsigned short tmp;
 	unsigned int i, tmp2;
 
 	puts("ata_pio_install()\n");
-	//ata_pio_disk_reset();
 	puts("initialising disk\n");
 	//timer_install_tick_handler(ata_pio_poller); // register our callback.
 	//To use the IDENTIFY command, select a target drive by sending 0xA0 for the master drive, or 0xB0 for the slave, to the "drive select" IO port.
@@ -93,108 +86,61 @@ void ata_pio_install() {
 	kprintf("disk supports %x total lba addressable sectors in pio 28 mode\n");
 	sector_count = tmp2;
 
-	//ata_pio_disk_reset();
-
-}
-
-void ata_pio_poller() {
-	//puts("our ata_pio driver is recieving callbacks ok.\n");
-}
-
-//void ata_pio_read(int sector, int lba, void *buffer, size_t count) {
-//}
-
-// todo
-//void ata_pio_write(int sector, int lba, void *buffer, size_t count) {
-//}
-
-void reset() {
-}
-
-void ata_pio_disk_reset() {
- // There is an additional IO port that changes the behavior of each ATA bus, called the
- // Device Control Register (on the Primary bus, port 0x3F6)
- // For non-ATAPI drives, the only method a driver has of resetting a drive after a major error
- // is to do a "software reset" on the bus. Set bit 2 (SRST, value = 4) in the proper Control
- // Register for the bus. This will reset both ATA devices on the bus.
- //outb(0x3F6, 0x4);
-
- //Then, you have to clear that bit again, yourself.
- //outb(0x3F6, 0x0);
 }
 
 void ata_pio_read(size_t lba, void *buffer, size_t count) {
-   size_t bytes_read;
-   char *buff = (char*)buffer;
-   unsigned short word;
-   char chr;
-   int tmp;
-   //primary bus
-   unsigned short port = 0x1F0;
-   unsigned short slavebit = 0;
+	size_t bytes_read;
+	char *buff = (char*)buffer;
+	unsigned short word;
+	char chr;
+	int tmp;
+	//primary bus
+	unsigned short port = 0x1F0;
+	unsigned short slavebit = 0;
 
-	//cls();
 	kprintf("ata_pio_read: %x, %x, %i\n", lba, buff, count);
 
-   if (count == 0) { //nothing to read.
-        kprintf("nothing to read..\n");
-        return;
-   }
-
-   if ((inb(port+7) & 0x08) != 0x08) {
-		ata_pio_disk_reset();
-		puts("disk reset required\n");
+	if (count == 0) { //nothing to read.
+		kprintf("nothing to read..\n");
+		return;
 	}
 
-   //wait until DRQ bit is set
-   //while ((inb(port+7) & 0x08) != 0x08)
-		/* no op */;
+	//Send 0xE0 for the "master" or 0xF0 for the "slave", ORed with the highest 4 bits of the LBA to port 0x1F6:
+	outb(0x1F6, 0xE0 | (slavebit << 4) | ((lba >> 24) & 0x0F));
+	//outb(0x1F6, 0xE0 | ((lba >> 24) & 0x0F));
 
-   //Send 0xE0 for the "master" or 0xF0 for the "slave", ORed with the highest 4 bits of the LBA to port 0x1F6:
-   outb(0x1F6, 0xE0 | (slavebit << 4) | ((lba >> 24) & 0x0F));
-   //outb(0x1F6, 0xE0 | ((lba >> 24) & 0x0F));
+	//Send a NULL byte to port 0x1F1, if you like (it is ignored and wastes lots of CPU time):
+	outb(0x1F1, 0x00);
 
-   //Send a NULL byte to port 0x1F1, if you like (it is ignored and wastes lots of CPU time):
-   outb(0x1F1, 0x00);
-   //stall(5);
+	outb(0x1F2, 0x01); // Read one sector
 
-   //Send the sectorcount to port 0x1F2:
-   //outb(0x1F2, (unsigned char) sector_count);
-   // THINK THIS IS THE AMOUNT OF DATA TO READ!! NOT THE VOLUME SIZE COLLECTED EARLIER!
+	//Send the low 8 bits of the LBA to port 0x1F3:
+	outb(0x1F3, (unsigned char) lba);
 
-   outb(0x1F2, 0x01);  //READ ONE SECTOR (expect 512 bytes!?)
+	//Send the next 8 bits of the LBA to port 0x1F4:
+	outb(0x1F4, (unsigned char)(lba >> 8));
 
-   //Send the low 8 bits of the LBA to port 0x1F3:
-   outb(0x1F3, (unsigned char) lba);
+	//Send the next 8 bits of the LBA to port 0x1F5:
+	outb(0x1F5, (unsigned char)(lba >> 16));
 
-   //Send the next 8 bits of the LBA to port 0x1F4:
-   outb(0x1F4, (unsigned char)(lba >> 8));
+	//outb(0x1F6, 0xE0 | (1 << 4) | ((lba >> 24) & 0x0F));
 
-   //Send the next 8 bits of the LBA to port 0x1F5:
-   outb(0x1F5, (unsigned char)(lba >> 16));
+	//Send the "READ SECTORS" command (0x20) to port 0x1F7:
+	outb(0x1F7, 0x20);
 
-   //outb(0x1F6, 0xE0 | (1 << 4) | ((lba >> 24) & 0x0F));
-
-   //Send the "READ SECTORS" command (0x20) to port 0x1F7:
-   outb(0x1F7, 0x20);
-
-	kprintf("got here >> : %x, %x, %i\n", lba, buff, count);
-    //Wait for an IRQ or poll.
+	//Wait for an IRQ or poll.
 	for(tmp = 0; tmp < 3000; tmp++)
 	{}
 
-	puts("waiting on BUS BUSY to be cleared\n");
 	while ((inb(0x1F7) & 0x80) != 0x0) {} //wait until BUS BUSY bit to be cleared
-	puts("waiting for DRIVE READY to be set\n");
 	while ((inb(0x1F7) & 0x40) != 0x40) {} // wait for DRIVE READY bit to be set
 
-	kprintf("got here: %x, %x, %i\n", lba, buff, count);
 	//Transfer 256 words, a word at a time, into your buffer from I/O port 0x1F0. (In assembler, REP INSW works well for this.)
 	//(word = 2 bytes to 256 word = 512 bytes)
 
 	bytes_read = 0;
 
-	while (bytes_read < 256 ) {//&& count > 0) {
+	while (bytes_read < 256 ) {
 
 		word = 0;
 		word = inw(0x1F0);
@@ -203,7 +149,6 @@ void ata_pio_read(size_t lba, void *buffer, size_t count) {
 		buff[(bytes_read * 2) + 1] = word >> 8;
 
 		bytes_read++;
-		//count--;
 	}
 
 	kprintf("%i bytes read!\n", bytes_read);

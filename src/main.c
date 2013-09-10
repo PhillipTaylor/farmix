@@ -31,14 +31,6 @@ void outw (unsigned short _port, unsigned int _data) {
 	__asm__ __volatile__ ("outw %1, %0" : : "dN" (_port), "a" (_data));
 }
 
-void stall(int times) {
-    // port 0x80 is used for 'checkpoints' during POST.
-	// The Linux kernel seems to think it is free for use :-/
-	do {
-		asm volatile( "outb %%al, $0x80" : : "a"(0) );
-	} while (times-- > 0);
-}
-
 void print_welcome() {
 
 	puts("    888888888888888888888888888888888888888888888888888888888888888888888  \n");
@@ -82,7 +74,7 @@ void _start(void *grub1, unsigned int magic) {
 	disktesting();
 
 	//works on eeepc, not on VBox
-	//__asm__ __volatile__ ("sti");
+	__asm__ __volatile__ ("sti");
 
 	for (;;);
 }

@@ -17,7 +17,6 @@ extern unsigned char inb (unsigned short _port);
 extern void outb (unsigned short _port, char _data);
 extern unsigned short inw (unsigned short _port);
 extern void outw (unsigned short _port, unsigned int _data);
-extern void stall(int times);
 
 /* MEMORY/ */
 extern unsigned int grub_boot_memory_map;
